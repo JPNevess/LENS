@@ -67,13 +67,26 @@ reference implementation shipped with CapyMOA.
 
 ## Re-running the studies
 
-`experiments/` holds the runs that produce `results/`. They write per-instance
-probe archives, which are large and are not committed;
-`experiments/export_figure_data.py` reduces them to the compact tables the
-figures read.
+`experiments/` holds the runs that produce `results/`. Each one resumes from what
+is already in its output file, so it can be stopped and restarted.
+
+| script | produces | used by |
+|---|---|---|
+| `run_ablation.py` | the factorial grid | Table 1, Figures 4, 5, 6, 8 |
+| `run_seeds.py` | the same grid over several seeds | the spread in Table 1 |
+| `run_diversity_study.py` | diversity estimates vs ground truth | Figure 1 (top) |
+| `run_lambda_study.py` | the relevance/diversity sweep | Figures 1, 10a, 10c |
+| `run_referee_ablation.py` | high-order vs binary relevance referee | Figures 7, 11 |
+| `run_admission_study.py` | pseudo-label admission signals | Figure 9 |
+| `run_drift_detection.py` | drift detection signals | Figure 10d |
+| `compute_robustness_metrics.py` | pairwise diagnostics | Figures 5b, 5c |
+| `compute_signal_importance.py` | variance decomposition | Figure 5a |
+
+The studies write per-instance probe archives under `results/probes/`. Those are
+large and are not committed; `export_figure_data.py` reduces them to the compact
+tables in `results/figure_data/`, which are:
 
 ```bash
-python experiments/make_datasets.py --datasets LED_a RBF_m
 python experiments/export_figure_data.py --source results/probes
 ```
 
