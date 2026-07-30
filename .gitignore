@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.venv/
+venv/
+
+# Large source data: the feature-drift Covertype variant and its source are
+# built locally, see data/README.md
+data/CovtFD.arff
+data/ForestCoverType.*
+
+# Per-instance probe archives. They are the input of
+# experiments/export_figure_data.py, whose compact output is committed instead.
+*.npz
+results/probes/
+
+.DS_Store
