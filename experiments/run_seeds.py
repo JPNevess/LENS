@@ -71,7 +71,7 @@ def run_parallel_incertezas(dataset_paths, configs=CONFIGS, label_pcts=LABEL_PCT
         if "global_acc" in existing_df.columns:
             n_err = int(existing_df["global_acc"].isna().sum())
             if n_err:
-                print(f"  [LIMPEZA] {n_err} linhas de erro antigas removidas "
+                print(f"  [cleanup] {n_err} stale error rows dropped "
                       f"from the CSV, so they will run again).")
                 existing_df = existing_df[existing_df["global_acc"].notna()]
         all_rows  = existing_df.to_dict("records")
@@ -217,8 +217,8 @@ def run_parallel_incertezas(dataset_paths, configs=CONFIGS, label_pcts=LABEL_PCT
 
         pending = retry_next
 
-    print(f"\nIncertezas completo. {done} runs novos em {time.time()-start:.0f}s. "
-          f"Total de linhas no CSV: {len(all_rows)}.\nResultados em {csv_path}")
+    print(f"\nDone. {done} new run(s) in {time.time()-start:.0f}s. "
+          f"{len(all_rows)} rows in the CSV.\nResults in {csv_path}")
 
     return pd.DataFrame(all_rows)
 
@@ -237,7 +237,7 @@ def _print_summary(df):
     std = df.groupby(["dataset", "config", "label_pct"])["global_acc"].std().dropna()
     if not std.empty:
         print("\n" + "=" * 65)
-        print("  VARIABILIDADE — std da accuracy entre seeds, por config")
+        print("  Variability: standard deviation of accuracy over seeds, per configuration")
         print("=" * 65)
         agg = std.groupby("config").agg(["mean", "max"]).round(4)
         agg.columns = ["std_media", "std_max"]
@@ -254,17 +254,17 @@ def _parse_args():
                         help="cap on instances per run (0 or omitted means the whole stream, "
                              "--quick = 5000).")
     parser.add_argument("--datasets", type=str, nargs="+", default=None,
-                        help="Subconjunto de datasets (ex: Electricity LED_a)")
+                        help="subset of the streams (e.g. Electricity LED_a)")
     parser.add_argument("--configs", type=str, nargs="+", default=list(CONFIGS),
-                        help="Subconjunto de configs (ex: config_12). Default: todas.")
+                        help="subset of the configurations (e.g. config_12)")
     parser.add_argument("--label-pcts", type=int, nargs="+", default=list(LABEL_PCTS),
                         dest="label_pcts")
     parser.add_argument("--seeds", type=int, nargs="+", default=list(SEEDS),
-                        help=f"Seeds a correr (default: {list(SEEDS)} — 3 runs por config)")
+                        help=f"seeds to run (default: {list(SEEDS)})")
     parser.add_argument("--include-big", dest="include_big", action="store_true",
-                        help="Inclui os datasets grandes (CovtFD, ForestCoverType, "
-                             "PokerHand) no run — para corridas noturnas. "
-                             "Sem esta flag ficam fora.")
+                        help="include the large streams (CovtFD, ForestCoverType, "
+                             "PokerHand), which are excluded by default because "
+                             "each run takes hours")
     parser.add_argument("--workers", type=int, default=MAX_WORKERS,
                         help=f"number of parallel worker processes (default: {MAX_WORKERS})")
     parser.add_argument("--output", type=str, default=OUTPUT_DIR)
@@ -288,11 +288,11 @@ def main():
         if big and not args.include_big:
             print(f"  [skip] large streams excluded by default: "
                   f"{[os.path.basename(p) for p in big]} "
-                  f"(usar --include-big ou --datasets para os correr)")
+                  f"(pass --include-big or name them in --datasets to run them)")
             dataset_paths = [p for p in dataset_paths if p not in big]
 
     if not dataset_paths:
-        print(f"Nenhum .arff encontrado em '{DATASETS_DIR}/'. Abortar.")
+        print(f"no .arff found in '{DATASETS_DIR}/'; nothing to run")
         return
 
     dataset_paths = sorted(dataset_paths, key=os.path.getsize)
@@ -314,7 +314,7 @@ def main():
     print(f"  Datasets    : {[os.path.basename(p) for p in dataset_paths]}")
     print(f"  Configs     : {list(configs)}")
     print(f"  Label pcts  : {args.label_pcts}")
-    print(f"  Seeds       : {seeds}  ({len(seeds)} runs por config/dataset)")
+    print(f"  Seeds       : {seeds}  ({len(seeds)} runs per configuration and stream)")
     print(f"  Workers     : {args.workers}")
     print(f"  Max inst.   : {max_instances if max_instances else 'all'}")
     print(f"  Output      : {os.path.join(args.output, CSV_NAME)}")

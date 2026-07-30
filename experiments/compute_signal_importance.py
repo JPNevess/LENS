@@ -78,7 +78,9 @@ def load_multiseed(csv):
 
 
 def build(df, cfg_nums, lp, target):
-    """long df: linha por (config, dataset) com indicadores + alvo (%)."""
+    """Long table: one row per (configuration, stream) with the indicators and the
+    target, in percent.
+    """
     rows = []
     sub = df[df.label_pct == lp]
     for i in cfg_nums:
@@ -132,7 +134,7 @@ def rf_importance(data, feats):
 
 
 def fig_coef(all_coefs, table, feats, out):
-    """coeficientes OLS: por feature, 4 barras (acc/f1 × 5/1) com IC95."""
+    """OLS coefficients: four bars per feature (accuracy/F1 at 5%/1%) with 95% CIs."""
     combos = [(t, lp, f"{tl} {sl}") for (t, tl) in TARGETS for (lp, sl) in LPS]
     cols = ["#4C72B0", "#8Fb4d9", "#DD8452", "#f0b98e"]
     fig, ax = plt.subplots(figsize=(1.9*len(feats)+2, 5))
@@ -161,7 +163,7 @@ def fig_coef(all_coefs, table, feats, out):
     ax.legend(fontsize=8, ncol=2, framealpha=0.8); ax.grid(axis="y", alpha=0.25)
     for ext in ("png", "pdf"):
         fig.savefig(f"{out}.{ext}", dpi=300, bbox_inches="tight")
-    plt.close(fig); print(f"Guardado: {out}.png/.pdf")
+    plt.close(fig); print(f"written: {out}.png/.pdf")
 
 
 def fig_fanova(all_imp, table, feats, out):
@@ -184,7 +186,7 @@ def fig_fanova(all_imp, table, feats, out):
     ax.legend(fontsize=8, ncol=2, framealpha=0.8); ax.grid(axis="y", alpha=0.25)
     for ext in ("png", "pdf"):
         fig.savefig(f"{out}.{ext}", dpi=300, bbox_inches="tight")
-    plt.close(fig); print(f"Guardado: {out}.png/.pdf")
+    plt.close(fig); print(f"written: {out}.png/.pdf")
 
 
 def main():
@@ -204,7 +206,7 @@ def main():
     sfx = ("_multiseed" if args.multiseed else "") + ("_inter" if args.interactions else "")
     if "config_base" not in set(df.config):
         print("  [error] config_base is not in the CSV yet. "
-              "Corre:  python3 run_ablation.py --configs config_base --include-big")
+              "Run:  python3 run_ablation.py --configs config_base --include-big")
         return
 
     all_coefs, all_imp, csv_rows = {}, {}, []
@@ -231,7 +233,7 @@ def main():
                    os.path.join(args.out, f"fig_fanova_{table}{sfx}"))
     out_csv = os.path.join(args.out, f"component_importance{sfx}.csv")
     pd.DataFrame(csv_rows).to_csv(out_csv, index=False)
-    print(f"Guardado: {out_csv}")
+    print(f"written: {out_csv}")
 
 
 if __name__ == "__main__":

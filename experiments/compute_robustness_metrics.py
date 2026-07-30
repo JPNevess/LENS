@@ -110,7 +110,7 @@ def main():
     res = pd.DataFrame(rows)
     name = "sota_metrics_multiseed.csv" if args.multiseed else "sota_metrics.csv"
     res.to_csv(os.path.join(args.out, name), index=False)
-    print(f"Guardado: {os.path.join(args.out, name)}  ({len(res)} pares)")
+    print(f"written: {os.path.join(args.out, name)}  ({len(res)} pairs)")
 
     summ = []
     for (t, tl) in TARGETS:
@@ -126,7 +126,7 @@ def main():
     summ = pd.DataFrame(summ)
     sname = "sota_summary_multiseed.csv" if args.multiseed else "sota_summary.csv"
     summ.to_csv(os.path.join(args.out, sname), index=False)
-    print(f"Guardado: {os.path.join(args.out, sname)}")
+    print(f"written: {os.path.join(args.out, sname)}")
     print("\nFragility rate (fraction of pairs failing at least one test):")
     print(summ.to_string(index=False))
 

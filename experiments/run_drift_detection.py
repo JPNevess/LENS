@@ -23,10 +23,10 @@ import os, sys, csv, time, argparse, warnings, traceback
 warnings.filterwarnings("ignore")
 
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-OUT_DIR  = os.path.join(_ROOT, "Results", "drift_detection")
+OUT_DIR  = os.path.join(_ROOT, "results", "drift_detection")
 ALARMS   = os.path.join(OUT_DIR, "alarms")
 PLOTS    = os.path.join(OUT_DIR, "plots")
-CSV_PATH = os.path.join(OUT_DIR, "drift_detection_runs.csv")
+CSV_PATH = os.path.join(OUT_DIR, "runs.csv")
 
 import numpy as np
 import pandas as pd
@@ -133,7 +133,7 @@ def _run_dataset(task):
     np.random.seed(seed)
     import random as _random; _random.seed(seed)
 
-    stream = ARFFStream(os.path.join(_ROOT, "datasets", f"{ds}.arff"))
+    stream = ARFFStream(os.path.join(_ROOT, "data", f"{ds}.arff"))
     schema = stream.get_schema()
     nfeat  = schema.get_num_attributes()
     ssize  = max(1, int(round(SUBSPACE_FRAC * nfeat)))
@@ -278,7 +278,9 @@ def _run_dataset(task):
 
 
 def _has_all_deltas(ds, seed, lp):
-    """npz completo (alarmes por delta + sinais) para este (ds, seed, lp)?"""
+    """Is the archive for this (stream, seed, label rate) complete, that is does it
+    hold both the alarms for every delta and the signals?
+    """
     p = _npz_path(ds, seed, lp)
     if not os.path.exists(p):
         return False
@@ -385,12 +387,12 @@ TUNE_BY = "F1"
 def compute_metrics(tune_by=None):
     tune_by = tune_by or TUNE_BY
     if not os.path.exists(CSV_PATH):
-        print("  [AVISO] sem drift_detection_runs.csv — corre primeiro as runs.")
+        print("  [warning] no runs.csv; run the sweep first.")
         return pd.DataFrame(), pd.DataFrame()
     runs = pd.read_csv(CSV_PATH)
     if "label_pct" not in runs.columns:
         print("  [note] runs table is from an older design "
-              "(sem label_pct) — corre as novas runs.")
+              "(no label_pct column); re-run the sweep.")
         return pd.DataFrame(), pd.DataFrame()
     runs = runs.drop_duplicates(["dataset", "seed", "label_pct"], keep="last")
     rows = []
@@ -423,7 +425,7 @@ def compute_metrics(tune_by=None):
     for (ds, seed), g in allm.groupby(["dataset", "seed"]):
         g = g.copy(); g["score_sel"] = _score(g, ds); parts.append(g)
     allm = pd.concat(parts, ignore_index=True)
-    allm.to_csv(os.path.join(OUT_DIR, "drift_detection_delta_sweep.csv"), index=False)
+    allm.to_csv(os.path.join(OUT_DIR, "delta_sweep.csv"), index=False)
     crit = "score_sel" if tune_by == "score" else "F1"
     best = (allm.groupby(["detector", "delta"])[crit].mean()
                 .reset_index().sort_values(crit, ascending=False)
@@ -437,7 +439,7 @@ def compute_metrics(tune_by=None):
     for (ds, seed), g in df.groupby(["dataset", "seed"]):
         g = g.copy(); g["score"] = _score(g, ds); parts.append(g)
     df = pd.concat(parts, ignore_index=True)
-    df.to_csv(os.path.join(OUT_DIR, "drift_detection_metrics.csv"), index=False)
+    df.to_csv(os.path.join(OUT_DIR, "metrics.csv"), index=False)
 
     summ = (df.assign(tipo=df.dataset.map(
                 lambda d: "gradual" if d in GRADUAL else "abrupto"))
@@ -447,8 +449,8 @@ def compute_metrics(tune_by=None):
                    precision=("precision", "mean"), F1=("F1", "mean"),
                    score=("score", "mean"))
               .reset_index())
-    summ.to_csv(os.path.join(OUT_DIR, "drift_detection_summary.csv"), index=False)
-    print("  Guardado: drift_detection_{delta_sweep,metrics,summary}.csv")
+    summ.to_csv(os.path.join(OUT_DIR, "summary.csv"), index=False)
+    print("  written: delta_sweep.csv, metrics.csv, summary.csv")
     return df, allm
 
 
@@ -470,7 +472,7 @@ def _split_key(k):
 
 
 def _load_lps(ds, seed):
-    """{label_pct: npz} — um ficheiro por regime de labels."""
+    """{label_pct: npz}, one archive per label rate."""
     out = {}
     for lp in LABEL_PCTS:
         p = _npz_path(ds, seed, lp)
@@ -489,7 +491,7 @@ def make_plots():
         if k in best_delta:
             print(f"  {DET_LABEL[k]:42s} δ = {best_delta[k]:g}")
     print("\n=== summary per detector (mean over abrupt | gradual) ===")
-    print(pd.read_csv(os.path.join(OUT_DIR, "drift_detection_summary.csv"))
+    print(pd.read_csv(os.path.join(OUT_DIR, "summary.csv"))
           .to_string(index=False))
 
 
@@ -502,12 +504,12 @@ def replay_deltas(new_deltas):
         with np.load(p) as z:
             data = {k: z[k] for k in z.files}
         if f"sigv_{SAVE_KEYS[0]}" not in data:
-            print(f"  [skip] {f}: sem sinais guardados (formato antigo)")
+            print(f"  [skip] {f}: no stored signals (old format)")
             continue
         have = set(float(d) for d in data.get("deltas", []))
         todo = [d for d in new_deltas if d not in have]
         if not todo:
-            print(f"  [ok]   {f}: nada a acrescentar")
+            print(f"  [ok]   {f}: nothing to add")
             continue
         for k in SAVE_KEYS:
             vals, idxs = data[f"sigv_{k}"], data[f"sigi_{k}"]
@@ -526,19 +528,19 @@ def main():
     ap.add_argument("--plots-only", action="store_true")
     ap.add_argument("--replay-deltas", type=float, nargs="+", default=None,
                     dest="replay_deltas",
-                    help="acrescenta deltas a partir dos sinais guardados (sem "
+                    help="add more deltas from the stored signals, without "
                          "repetir o passe pelo stream)")
     ap.add_argument("--datasets", nargs="+", default=list(DATASETS))
     ap.add_argument("--seeds", type=int, nargs="+", default=list(SEEDS))
     ap.add_argument("--label-pcts", type=int, nargs="+", default=list(LABEL_PCTS),
-                    dest="label_pcts", help="regimes de labels (default 5 1)")
+                    dest="label_pcts", help="label rates to evaluate")
     ap.add_argument("--workers", type=int, default=2)
     ap.add_argument("--max-instances", type=int, default=0,
                     help="0 = full stream (default)")
     ap.add_argument("--tune-by", choices=("F1", "score"), default=TUNE_BY,
                     dest="tune_by",
                     help="criterion used to pick the ADWIN delta per detector "
-                         "(default F1 = o que as figuras reportam)")
+                         "(F1 is what the figures report)")
     args = ap.parse_args()
     globals()["TUNE_BY"] = args.tune_by
     if args.replay_deltas:

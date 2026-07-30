@@ -1,6 +1,12 @@
 """Regenerate every figure and the results table from the committed CSVs."""
+import os
 import runpy
 import sys
+
+# The scripts import their helpers as top-level modules and are resolved next to
+# this file, so the script runs the same from any working directory.
+_HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, _HERE)
 
 SCRIPTS = [
     "table01_results.py",
@@ -24,7 +30,7 @@ def main():
     for script in SCRIPTS:
         print(f"\n== {script}")
         try:
-            runpy.run_path(script, run_name="__main__")
+            runpy.run_path(os.path.join(_HERE, script), run_name="__main__")
         except Exception as error:
             failed.append((script, error))
             print(f"  failed: {error}")

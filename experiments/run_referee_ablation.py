@@ -21,10 +21,9 @@ PROBE_NAME = "referee"
 import numpy as np, pandas as pd
 
 DATASETS_DIR = os.path.join(_ROOT, "data")
-OUT_DIR      = os.path.join(_ROOT, "Results", "mlhat_hat_ablation")
+OUT_DIR      = os.path.join(_ROOT, "results", "referee_ablation")
 SAMPLES_DIR  = os.path.join(_ROOT, "results", "probes", PROBE_NAME)
-FIG_DIR      = os.path.join(_ROOT, "Results", "paper", "mlhat_hat_ablation")
-CSV_PATH     = os.path.join(OUT_DIR, "mlhat_hat_results.csv")
+CSV_PATH     = os.path.join(OUT_DIR, "runs.csv")
 
 EXCLUDE = ("Rialto", "NOAA", "airlines_without_AirportToFrom", "RBF_a", "ForestCoverType")
 BIG     = ( "ForestCoverType", "PokerHand")
@@ -181,7 +180,7 @@ def main():
     ap.add_argument("--label-pcts", type=int, nargs="+", default=list(LPS), dest="label_pcts")
     ap.add_argument("--include-big", action="store_true", dest="include_big")
     ap.add_argument("--max-instances", type=int, default=0, dest="max_instances")
-    ap.add_argument("--cap", type=int, default=20000, help="teto de linhas do probe por run")
+    ap.add_argument("--cap", type=int, default=20000, help="cap on probe rows per run")
     ap.add_argument("--workers", type=int, default=2)
     ap.add_argument("--plots-only", action="store_true", dest="plots_only")
     ap.add_argument("--collect-only", action="store_true", dest="collect_only",
@@ -213,13 +212,11 @@ def main():
         df = pd.read_csv(CSV_PATH) if os.path.exists(CSV_PATH) else pd.DataFrame()
 
     if args.collect_only:
-        print("\n  recolha terminada. Para redesenhar TUDO:\n"
-              "     python3 mlhat_hat_ablation.py --plots-only --configs "
-              "config_2 config_12 config_13 config_8 config_7")
+        print("\n  collection finished; the tables are in "
+              f"{OUT_DIR}")
         return
     if df.empty:
-        print("  [AVISO] sem dados — nada a desenhar."); return
-    os.makedirs(FIG_DIR, exist_ok=True)
+        print("  [warning] no data collected."); return
 
     print("\nSummary (mean over streams, 5% labels):")
     g = df[df.label_pct == 5].groupby(["config", "mode"]).agg(

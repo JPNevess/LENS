@@ -21,7 +21,7 @@ PROBE_NAME = "admission"
 import numpy as np, pandas as pd
 
 DATASETS_DIR = os.path.join(_ROOT, "data")
-OUT_DIR      = os.path.join(_ROOT, "Results", "paper", "admission")
+OUT_DIR      = os.path.join(_ROOT, "results", "admission")
 SAMPLES_DIR  = os.path.join(_ROOT, "results", "probes", PROBE_NAME)
 
 EXCLUDE = ("Rialto", "NOAA", "airlines_without_AirportToFrom", "RBF_a", "ForestCoverType")
@@ -31,7 +31,7 @@ CONFIG_SIGNAL = {
     "config_5":  ("M", "M = margin  (config 5, self-train)",             "#4C72B0", "o"),
     "config_6":  ("c", "c = learn-by-disagreement  (config 6)",          "#DD8452", "s"),
     "config_13": ("A", "Â = MLHAT accuracy  (config 13, meta-self-train)", "#55A868", "^"),
-    "config_7":  ("C", "C = √(Â·M)  (config 7, self-train ponderado)",   "#8172B2", "D"),
+    "config_7":  ("C", "C = √(Â·M)  (config 7, weighted self-training)",   "#8172B2", "D"),
     "config_8":  ("w", "w = sqrt(A_bar * c), hybrid disagreement", "#C44E52", "v"),
     "config_13_br": ("A(BR)", "A_hat under a binary relevance referee",
                      "#937860", "P"),
@@ -44,7 +44,7 @@ CONFIGS = ("config_5", "config_6", "config_13", "config_7", "config_8")
 CONFIGS_BR = ("config_7",)
 BR_SUFFIX  = "_br"
 ALL_SIGNALS = tuple(CONFIG_SIGNAL.keys())
-BR_SAMPLES = os.path.join(_ROOT, "Results", "mlhat_hat_ablation", "samples")
+BR_SAMPLES = os.path.join(_ROOT, "results", "probes", "referee")
 SAMPLES_BR = os.path.join(OUT_DIR, "samples_br")
 LPS     = (5, 1)
 INK, MUTED = "#222222", "#666666"
@@ -182,8 +182,8 @@ def _stats(score, correct):
 
 
 def _pool_balanced(cfg, datasets, lp, per_ds_cap=40000, seed=42):
-    """concatena amostras de todos os datasets, com o MESMO teto por dataset
-    (para nenhum dataset grande dominar as curvas agregadas)."""
+    """Samples from every stream, with the same cap each so that no large stream
+    dominates the pooled curves."""
     rng = np.random.RandomState(seed)
     S, C = [], []
     for dpath in datasets:
@@ -218,7 +218,7 @@ def analyze(datasets, label_pcts):
     df = pd.DataFrame(rows)
     os.makedirs(OUT_DIR, exist_ok=True)
     df.to_csv(os.path.join(OUT_DIR, "admission_stats.csv"), index=False)
-    print(f"Guardado: {os.path.join(OUT_DIR,'admission_stats.csv')}  ({len(df)} linhas)")
+    print(f"written: {os.path.join(OUT_DIR,'stats.csv')}  ({len(df)} rows)")
     return df
 
 
@@ -229,7 +229,7 @@ def main():
     ap.add_argument("--include-big", action="store_true", dest="include_big",
                     help="inclui CovtFD (lento)")
     ap.add_argument("--max-instances", type=int, default=0, dest="max_instances")
-    ap.add_argument("--cap", type=int, default=150000, help="teto de amostras por run")
+    ap.add_argument("--cap", type=int, default=150000, help="cap on samples per run")
     ap.add_argument("--workers", type=int, default=2)
     ap.add_argument("--plots-only", action="store_true", dest="plots_only")
     ap.add_argument("--collect-only", action="store_true", dest="collect_only",
@@ -239,10 +239,10 @@ def main():
     ap.add_argument("--referee-mode", choices=("mlhat", "binary_relevance"),
                     default="mlhat", dest="referee_mode",
                     help="referee used for the collection; binary_relevance writes to "
-                         "samples_br/ e alimenta os sinais *_br das figuras")
+                         "samples_br/, which feeds the *_br signals of the figures")
     ap.add_argument("--configs", nargs="+", default=None,
-                    help="configs a recolher (default: as 5 do MLHAT, ou "
-                         "config_8 no modo binary_relevance)")
+                    help="configurations to collect (default: the five MLHAT ones, or "
+                         "config_8 under binary_relevance)")
     args = ap.parse_args()
 
     if args.datasets:
@@ -268,13 +268,13 @@ def main():
                 args.workers, mode=args.referee_mode, configs=args.configs)
 
     if args.collect_only:
-        print("\n  recolha terminada. Para redesenhar TUDO (5% e 1%):\n"
-              "     python3 admission_validation.py --plots-only")
+        print("\n  collection finished; the tables are in "
+              f"{OUT_DIR}")
         return
 
     df = analyze(paths, tuple(args.label_pcts))
     if df.empty:
-        print("  [AVISO] sem amostras recolhidas — nada a desenhar.")
+        print("  [warning] no samples collected.")
         return
 
     print("\nSummary (mean over streams):")
@@ -284,13 +284,13 @@ def main():
     print(g.to_string())
 
     if "eaurc" in df:
-        print("\nE-AURC — win-rate emparelhado por dataset (menor = melhor):")
+        print("\nE-AURC: paired win rate per stream (lower is better):")
         p = df.pivot_table(index=["label_pct", "dataset"], columns="signal",
                            values="eaurc")
         for a, b in [("C", "M"), ("C", "A"), ("w", "A"), ("w", "c"), ("C", "c")]:
             if a in p and b in p:
                 d = (p[a] - p[b]).dropna()
-                print(f"   {a:>2s} melhor que {b:<2s}: {(d < 0).sum():2d}/{len(d)}"
+                print(f"   {a:>2s} beats {b:<2s}: {(d < 0).sum():2d}/{len(d)}"
                       f"   mean delta {d.mean():+.3f}")
 
 

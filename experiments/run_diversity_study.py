@@ -21,10 +21,9 @@ PROBE_NAME = "diversity"
 import numpy as np, pandas as pd
 
 DATASETS_DIR = os.path.join(_ROOT, "data")
-OUT_DIR      = os.path.join(_ROOT, "Results", "diversity_comparison")
+OUT_DIR      = os.path.join(_ROOT, "results", "diversity_study")
 SAMPLES_DIR  = os.path.join(_ROOT, "results", "probes", PROBE_NAME)
-FIG_DIR      = os.path.join(_ROOT, "Results", "paper", "diversity_comparison")
-CSV_PATH     = os.path.join(OUT_DIR, "diversity_results.csv")
+CSV_PATH     = os.path.join(OUT_DIR, "runs.csv")
 
 EXCLUDE = ("Rialto", "NOAA", "airlines_without_AirportToFrom", "RBF_a",
            "ForestCoverType", "PokerHand")
@@ -156,7 +155,7 @@ def _load(mode, cfg, ds, lp):
 
 
 def _pairs(est_key, datasets, lp, per_ds_cap=1500, seed=42):
-    """(estimador_pairs, gt_pairs) empilhados sobre datasets, teto igual por dataset."""
+    """(estimate, ground truth) pairs stacked over streams, same cap for each."""
     rng = np.random.RandomState(seed)
     mode = EST[est_key][2]
     X, Y = [], []
@@ -187,7 +186,7 @@ def main():
     ap.add_argument("--label-pcts", type=int, nargs="+", default=list(LPS), dest="label_pcts")
     ap.add_argument("--max-instances", type=int, default=0, dest="max_instances",
                     help="0 = stream COMPLETO (default); >0 = capar")
-    ap.add_argument("--cap", type=int, default=PROBE_CAP, help="teto de linhas do probe/run")
+    ap.add_argument("--cap", type=int, default=PROBE_CAP, help="cap on probe rows per run")
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--plots-only", action="store_true", dest="plots_only")
     args = ap.parse_args()
@@ -212,7 +211,7 @@ def main():
     else:
         df = pd.read_csv(CSV_PATH) if os.path.exists(CSV_PATH) else pd.DataFrame()
     if df.empty:
-        print("  [AVISO] sem dados — nada a desenhar."); return
+        print("  [warning] no data collected."); return
 
     print("\nFidelity of the estimated diversity against the truth "
           "(mean over streams):")

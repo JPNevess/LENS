@@ -15,8 +15,11 @@ from capymoa.classifier import HoeffdingAdaptiveTree
 from capymoa.drift.detectors import ADWIN
 from capymoa.instance import LabeledInstance
 from river import tree as _river_tree
+from river.ensemble.bagging import BaggingClassifier as _BaggingClassifier
+from river.optim.sgd import SGD as _SGD
 
 from MLHAT import MLHAT
+from linear_model.log_reg import LogisticRegression as _LogisticRegression
 from multioutput import BinaryRelevance as _BinaryRelevance
 
 from .config import (
@@ -26,6 +29,20 @@ from .config import (
     DIVERSITY_CORRELATION, DIVERSITY_DISAGREEMENT, DIVERSITY_DOUBLE_FAULT,
     DIVERSITY_KAPPA, DIVERSITY_Q_STATISTIC,
 )
+
+
+def _seeded_referee(seed):
+    """Build the MLHAT referee with its bagged component seeded from ``seed``.
+
+    MLHAT's own default for that component is constructed once, when the module
+    is imported, from the unseeded global RNG. Every process therefore gets a
+    different bagging seed and the same run drifts by a few hundredths of a
+    point. Passing it explicitly makes a run depend only on ``seed``.
+    """
+    high_card_clf = _BinaryRelevance(
+        _BaggingClassifier(_LogisticRegression(_SGD(0.3)), n_models=10,
+                           seed=seed))
+    return MLHAT(high_card_clf=high_card_clf)
 
 
 class LENS:
@@ -182,7 +199,7 @@ class LENS:
                 grace_period=200, seed=seed)
             self.referee = _BinaryRelevance(_base_hat)
         elif referee_mode == "mlhat":
-            self.referee = MLHAT()
+            self.referee = _seeded_referee(seed)
         else:
             raise ValueError(f"unknown referee_mode: {referee_mode!r} "
                              "(use 'mlhat' or 'binary_relevance')")

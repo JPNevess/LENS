@@ -55,10 +55,16 @@ self-training mechanisms differ.
 ```bash
 python benchmarks/run_lens.py                       # the full method
 python benchmarks/our_implementation_of_dyned.py    # one baseline
-python benchmarks/run_lens.py --datasets Electricity --label-pcts 5 --seeds 42
+python benchmarks/run_lens.py --datasets Electricity --label-pcts 5
 ```
 
-Rows are appended to `results/benchmarks/runs.csv`.
+Rows are appended to `results/benchmarks/runs.csv`, one per run, and the script
+prints the cell means at the end.
+
+Every reported number is the mean over five seeds, which is the default. A seed
+fixes both which instances are labelled and the initialisation of the learners,
+and on the noisier streams a single seed sits more than a point away from that
+mean, so `--seeds 42` alone is not comparable with the reported values.
 
 The baselines named `our_implementation_of_*` reproduce the mechanism of a
 published method inside this harness; they are not ports of the original

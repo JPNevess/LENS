@@ -200,7 +200,7 @@ ALL = ["LED_a", "LED_g", "AGR_a", "AGR_g", "RBF_m", "RBF_f", "RBF_a", "CovtFD"]
 def main():
     ap = argparse.ArgumentParser(
         description="Generate the synthetic streams used in the paper.")
-    ap.add_argument("--datasets", nargs="+", default=ALL, help=f"quais gerar (default: {ALL})")
+    ap.add_argument("--datasets", nargs="+", default=ALL, help=f"which streams to generate (default: {ALL})")
     ap.add_argument("--out", default=OUT_DIR)
     ap.add_argument("--seed", type=int, default=42, help="seed of the data and drift generators")
     ap.add_argument("--max-instances", type=int, default=0, dest="n_max",
@@ -227,7 +227,7 @@ def main():
     for ds in args.datasets:
         if ds not in builders:
             print(f"[skip] unknown stream: {ds} (available: {ALL})"); continue
-        print(f"\n=== A gerar {ds} ===")
+        print(f"\n=== generating {ds} ===")
         builders[ds]()
         arff = os.path.join(args.out, f"{ds}.arff")
         if args.label_rate is not None and os.path.exists(arff):

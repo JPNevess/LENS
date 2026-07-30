@@ -81,8 +81,8 @@ def run_parallel_ablation(dataset_paths, configs=CONFIGS, label_pcts=LABEL_PCTS,
         if "global_acc" in existing_df.columns:
             n_err = int(existing_df["global_acc"].isna().sum())
             if n_err:
-                print(f"  [LIMPEZA] {n_err} linhas de erro antigas removidas "
-                      f"from the CSV, so they will run again).")
+                print(f"  [cleanup] {n_err} stale error rows dropped from the "
+                      f"CSV, so those runs are attempted again")
                 existing_df = existing_df[existing_df["global_acc"].notna()]
         all_rows    = existing_df.to_dict("records")
         def _unsup(v):
@@ -275,14 +275,14 @@ def _parse_args():
                         help="cap each run at 5000 instances, for a quick check")
     parser.add_argument("--max-instances", type=int, default=None, dest="max_instances",
                         help="cap on instances per run (0 or omitted means the whole stream, "
-                             "--quick = 5000). Ex.: --max-instances 50000 para teste prolongado.")
+                             "--quick = 5000)")
     parser.add_argument("--datasets", type=str, nargs="+", default=None,
-                        help="Subconjunto de datasets (ex: NOAA Electricity)")
+                        help="subset of the streams (e.g. LED_a Electricity)")
     parser.add_argument("--configs", type=str, nargs="+", default=list(CONFIGS),
-                        help="Subconjunto de configs (ex: config_3). Default: todas.")
+                        help="subset of the configurations (e.g. config_3)")
     parser.add_argument("--diversities", type=str, nargs="+", default=[DIVERSITY],
                         help="diversity measures to sweep (only affects the MMR configurations). "
-                             "Use 'all' para todas. Ex.: --diversities all")
+                             "Pass 'all' to sweep every measure")
     parser.add_argument("--unsup-drift", dest="unsup_drift", action="store_true",
                         help="unsupervised student-teacher drift detection. "
                              "Use a separate --output so it does not mix with the base runs.")
@@ -293,8 +293,8 @@ def _parse_args():
     parser.add_argument("--seeds", type=int, nargs="+", default=None,
                         help="several seeds, overriding --seed")
     parser.add_argument("--include-big", dest="include_big", action="store_true",
-                        help="Inclui os datasets grandes (CovtFD, ForestCoverType) "
-                             "no run — para corridas noturnas. Sem esta flag ficam fora.")
+                        help="include the large streams (CovtFD, ForestCoverType), which "
+                             "are excluded by default because each run takes hours")
     parser.add_argument("--all-history", dest="all_history", action="store_true",
                         help="write the internal history for every configuration and not "
                              "only the full method, which is needed for the "
@@ -322,11 +322,11 @@ def main():
         if big and not args.include_big:
             print(f"  [skip] large streams excluded by default: "
                   f"{[os.path.basename(p) for p in big]} "
-                  f"(usar --include-big ou --datasets para os correr)")
+                  f"(pass --include-big or name them in --datasets to run them)")
             dataset_paths = [p for p in dataset_paths if p not in big]
 
     if not dataset_paths:
-        print(f"Nenhum .arff encontrado em '{DATASETS_DIR}/'. Abortar.")
+        print(f"no .arff found in '{DATASETS_DIR}/'; nothing to run")
         return
 
     dataset_paths = sorted(dataset_paths, key=os.path.getsize)

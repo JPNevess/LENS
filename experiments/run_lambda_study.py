@@ -24,11 +24,11 @@ PROBE_NAME = "lambda"
 warnings.filterwarnings("ignore")
 
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-OUT_DIR  = os.path.join(_ROOT, "Results", "omega_study")
+OUT_DIR  = os.path.join(_ROOT, "results", "lambda_study")
 SAMPLES  = os.path.join(_ROOT, "results", "probes", PROBE_NAME)
 HISTORY  = os.path.join(OUT_DIR, "history")
 PLOTS    = os.path.join(OUT_DIR, "plots")
-CSV_PATH = os.path.join(OUT_DIR, "omega_runs.csv")
+CSV_PATH = os.path.join(OUT_DIR, "runs.csv")
 
 import numpy as np
 import pandas as pd
@@ -69,13 +69,13 @@ def _probe_name(config, ds, lp, tag):
 
 
 def _worker(task):
-    """Corre 1 run com ω fixo (ou adapt) + probe; devolve a linha do CSV."""
+    """One run at a fixed (or adaptive) omega, with the probe; returns a CSV row."""
     ds, config, lp, tag = task["ds"], task["config"], task["lp"], task["tag"]
     print(f"  >> START {ds:8s} {config:10s} {lp:2d}%  ω={tag}  (pid={os.getpid()})",
           flush=True)
     import MMR_DEMS as MD
     res = MD.run_experiment(
-        dataset_path       = os.path.join(_ROOT, "datasets", f"{ds}.arff"),
+        dataset_path       = os.path.join(_ROOT, "data", f"{ds}.arff"),
         config             = config,
         label_pct          = lp,
         seed               = SEED,
@@ -129,7 +129,7 @@ def _done_keys():
 
 def seed_from_ablation():
     import shutil
-    abl = os.path.join(_ROOT, "Results", "ablation", "ablation_paper.csv")
+    abl = os.path.join(_ROOT, "results", "ablation", "runs.csv")
     if not os.path.exists(abl):
         print("  [seed] grid results not found, nothing to seed from.")
         return
@@ -141,7 +141,7 @@ def seed_from_ablation():
             key = (ds, "config_12", lp, "adapt")
             if key in done:
                 continue
-            hist_src = os.path.join(_ROOT, "Results", ds, "config_12",
+            hist_src = os.path.join(_ROOT, "results", "history", ds, "config_12",
                                     f"{lp}labels", f"history_seed{SEED}.csv")
             r = df[(df.dataset == ds) & (df.config == "config_12") &
                    (df.label_pct == lp) & (df.seed == SEED)]
@@ -248,7 +248,7 @@ def _probe_window_signals(npz_path, win=1000):
 
 
 def _acc_aligned(config, lp, dss, tag):
-    """Curva de rolling accuracy (%) alinhada nos drifts, para um ω. None se falta."""
+    """Rolling accuracy (%) aligned on the drifts for one omega, or None if missing."""
     vals, drifts = {}, {}
     for ds in dss:
         hp = _hist_path(tag, ds, config, lp)
@@ -264,7 +264,7 @@ def _acc_aligned(config, lp, dss, tag):
 
 
 def _internal_aligned(config, lp, dss, tag, cache, win=1000):
-    """(% membros corretos, diversidade do grupo correto) alinhadas nos drifts."""
+    """(correct members %, diversity of the correct group), aligned on the drifts."""
     vP, vD, drifts = {}, {}, {}
     for ds in dss:
         sig = cache.get((tag, ds))
@@ -332,14 +332,14 @@ def make_summary(df):
                                    if pre and early else np.nan,
                 })
     out = pd.DataFrame(rows)
-    out.to_csv(os.path.join(OUT_DIR, "omega_summary.csv"), index=False)
-    print(f"  Guardado: {os.path.join(OUT_DIR, 'omega_summary.csv')}")
+    out.to_csv(os.path.join(OUT_DIR, "summary.csv"), index=False)
+    print(f"  written: {os.path.join(OUT_DIR, 'summary.csv')}")
     return out
 
 
 def make_plots():
     if not os.path.exists(CSV_PATH):
-        print("  [AVISO] sem omega_runs.csv — corre primeiro as runs.")
+        print("  [warning] no runs.csv; run the sweep first.")
         return
     df = pd.read_csv(CSV_PATH)
     df = df[df.global_acc.notna()]
