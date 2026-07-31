@@ -232,9 +232,8 @@ def main():
     ap.add_argument("--workers", type=int, default=2)
     ap.add_argument("--plots-only", action="store_true", dest="plots_only")
     ap.add_argument("--collect-only", action="store_true", dest="collect_only",
-                    help="collect only, do not rewrite the summary (use when collecting "
-                         "a single label rate) "
-                         "com essa coluna)")
+                    help="collect only, do not rewrite the summary; use when "
+                         "collecting a single label rate")
     ap.add_argument("--referee-mode", choices=("mlhat", "binary_relevance"),
                     default="mlhat", dest="referee_mode",
                     help="referee used for the collection; binary_relevance writes to "

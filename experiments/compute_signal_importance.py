@@ -157,7 +157,8 @@ def fig_coef(all_coefs, table, feats, out):
                             va="bottom" if v >= 0 else "top", fontsize=11, fontweight="bold")
     ax.axhline(0, color="black", lw=0.8)
     ax.set_xticks(x); ax.set_xticklabels([FLABEL[f] for f in feats], fontsize=9, rotation=15)
-    ax.set_ylabel("Coeficiente OLS = efeito de ligar o componente (pp)", fontsize=9)
+    ax.set_ylabel("OLS coefficient: effect of enabling the component (pp)",
+                  fontsize=9)
     ax.set_title(f"Regression coefficients: {table.replace('_', ' ')}  (* p<0.05)",
                  fontsize=11, fontweight="bold")
     ax.legend(fontsize=8, ncol=2, framealpha=0.8); ax.grid(axis="y", alpha=0.25)
@@ -195,11 +196,10 @@ def main():
     ap.add_argument("--out", default=os.path.join(_ROOT, "results", "component_importance"))
     ap.add_argument("--multiseed", action="store_true",
                     help="use the grid plus the seeds table (cell means); "
-                         "escreve component_importance_multiseed.csv")
+                         "writes component_importance_multiseed.csv")
     ap.add_argument("--interactions", action="store_true",
                     help="add the component interactions the design can estimate; "
-                         "the plot still shows only "
-                         "os efeitos ISOLADOS")
+                         "the plot still shows the isolated effects only")
     args = ap.parse_args()
     os.makedirs(args.out, exist_ok=True)
     df = load_multiseed(args.csv) if args.multiseed else load(args.csv)

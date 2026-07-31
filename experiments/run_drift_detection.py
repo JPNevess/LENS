@@ -529,7 +529,7 @@ def main():
     ap.add_argument("--replay-deltas", type=float, nargs="+", default=None,
                     dest="replay_deltas",
                     help="add more deltas from the stored signals, without "
-                         "repetir o passe pelo stream)")
+                         "passing over the stream again")
     ap.add_argument("--datasets", nargs="+", default=list(DATASETS))
     ap.add_argument("--seeds", type=int, nargs="+", default=list(SEEDS))
     ap.add_argument("--label-pcts", type=int, nargs="+", default=list(LABEL_PCTS),

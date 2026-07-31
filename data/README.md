@@ -1,68 +1,74 @@
 # Streams
 
-Two kinds of stream live here, and only one of them is committed.
+No stream is committed. This directory holds the scripts that build the
+synthetic ones and the instructions for obtaining the real ones. Generated and
+downloaded files land here and are ignored by git.
 
-## Synthetic: generated, not shipped
+## Synthetic: one script each
 
-The six synthetic streams are defined by `lens/streams.py` and built on demand
-the first time an experiment asks for one, then cached in this directory. The
-generator and its seeds are what is committed; the files are not, and deleting
-one costs only the time to write it again.
+Each script writes one stream to `data/<name>.arff`. The geometry is defined by
+`lens/streams.py`, so a stream is fixed by that module plus one integer.
 
-| stream | instances | note |
+| script | stream | drift |
 |---|---|---|
-| `AGR_a`, `AGR_g` | 100k | Agrawal generator, 5% perturbation, abrupt and gradual drift |
-| `LED_a`, `LED_g` | 100k | LED generator, 10% label noise, abrupt and gradual drift |
-| `RBF_m`, `RBF_f` | 100k | Radial basis function, moderate and fast incremental drift |
+| `make_agr_a.py` | `AGR_a` | Agrawal, 5% perturbation, abrupt change points |
+| `make_agr_g.py` | `AGR_g` | Agrawal, gradual transitions |
+| `make_led_a.py` | `LED_a` | LED digits, 10% label noise, abrupt change points |
+| `make_led_g.py` | `LED_g` | LED digits, gradual transitions |
+| `make_rbf_m.py` | `RBF_m` | radial basis, slow continuous centroid drift |
+| `make_rbf_f.py` | `RBF_f` | radial basis, fast continuous centroid drift |
+| `make_rbf_a.py` | `RBF_a` | static radial basis concepts, abrupt change points |
 
-`RBF_a` is also defined — static RBF concepts joined by abrupt drifts — but is
-excluded from the studies by default.
+```bash
+python data/make_led_a.py                 # 100k instances, default seed
+python data/make_led_a.py --instances 50000
+python data/make_led_a.py --seed 1234 --out /tmp/LED_a.arff
+```
 
-To build them ahead of time rather than on first use:
+Building them by hand is optional: an experiment generates the stream it needs on
+first use and caches it here. `RBF_a` is defined but is not part of the default
+sweep.
+
+To build all of them at once:
 
 ```bash
 python experiments/make_datasets.py
-python experiments/make_datasets.py --datasets LED_a RBF_m --force
 ```
 
-The geometry lives in `lens/streams.py`: `STREAM_SEED` fixes the concept
-geometry and the instance draw, `GRADUAL_WIDTH` and `GRADUAL_POS` place the
-gradual transitions, and `ABRUPT_POS` places the abrupt ones. Changing any of
-them changes every stream, so runs made before and after such a change are not
-comparable with each other.
+### Changing the geometry
 
-## Real: committed or downloaded
+`lens/streams.py` holds `STREAM_SEED` for the concept geometry and the instance
+draw, `ABRUPT_POS` for the abrupt change points, `GRADUAL_POS` and
+`GRADUAL_WIDTH` for the gradual transitions, and `RBF_MODERATE` / `RBF_FAST` for
+the two drift speeds. Changing any of them changes every stream built afterwards,
+so results produced before and after such a change are not comparable.
 
-| file | instances | note |
+## Real: downloaded
+
+These cannot be generated from a seed. Place them in this directory under the
+names below.
+
+| file | instances | needed for |
 |---|---|---|
-| `Electricity.arff` | 45k | committed here |
-| `airlines.arff` | 539k | committed here |
-| `CovtFD.arff` | 581k | built locally, see below |
+| `Electricity.arff` | 45k | the `Electricity` row |
+| `airlines.arff` | 539k | the `airlines` row |
+| `ForestCoverType.arff` | 581k | building `CovtFD` |
 
-These cannot be generated from a seed. They have a labelling seed like any other
-stream, but the instances themselves are fixed.
+All three are distributed with MOA and are available from the usual
+stream-mining dataset collections.
 
-### CovtFD is not included
+### CovtFD
 
-`CovtFD` is a feature-drift variant of Covertype: the 54 real attributes are
-kept, 50 noise attributes are appended, and at one third and two thirds of the
-stream a block of numeric attributes is swapped with noise. The generated file is
-348 MB, above the 100 MB per-file limit of the hosting platform, so it is built
-locally:
+A feature-drift variant of Covertype: the 54 real attributes are kept, 50 noise
+attributes are appended, and at one third and two thirds of the stream a block of
+numeric attributes swaps position with noise attributes. The label is unchanged,
+so the drift is purely in which columns carry the signal.
 
-1. Download the Covertype dataset in ARFF form and save it here as
-   `ForestCoverType.arff`.
-2. Run:
+```bash
+python experiments/make_datasets.py --datasets CovtFD
+```
 
-       python experiments/make_datasets.py --datasets CovtFD
-
-Its seed is `COVTFD_SEED` in `experiments/make_datasets.py`, and it drives only
-the noise attributes and the permutation that produces the feature drift — the
-real attributes and the labels come from the source file unchanged.
-
-## Note on the committed results
-
-The CSVs under `results/` were produced from an earlier draw of the synthetic
-streams, with a different drift geometry and different seeds. Streams generated
-by the current code will not reproduce those numbers; see the provenance note in
-the top-level `README.md`.
+It needs `ForestCoverType.arff` in this directory and produces a 348 MB file.
+`COVTFD_SEED` in `experiments/make_datasets.py` drives only the noise attributes
+and the permutation; the real attributes and the labels come from the source file
+unchanged.

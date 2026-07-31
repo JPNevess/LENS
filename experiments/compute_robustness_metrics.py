@@ -86,7 +86,7 @@ def main():
     ap.add_argument("--out", default=os.path.join(_ROOT, "results", "sota_metrics"))
     ap.add_argument("--multiseed", action="store_true",
                     help="average over the seeds in results/seeds/runs.csv "
-                         "(escreve sota_metrics_multiseed.csv)")
+                         "(writes sota_metrics_multiseed.csv)")
     ap.add_argument("--seeds-csv", dest="seeds_csv",
                     default=os.path.join(_ROOT, "results", "seeds", "runs.csv"))
     args = ap.parse_args()

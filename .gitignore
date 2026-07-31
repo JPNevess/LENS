@@ -4,24 +4,16 @@ __pycache__/
 .venv/
 venv/
 
-# Generated streams. The synthetic ones are built from lens/streams.py on first
-# use and cached here, so the definition is committed and the bytes are not. The
-# feature-drift Covertype variant and its source are built locally too, see
-# data/README.md
-data/AGR_a.arff
-data/AGR_g.arff
-data/LED_a.arff
-data/LED_g.arff
-data/RBF_a.arff
-data/RBF_f.arff
-data/RBF_m.arff
-data/CovtFD.arff
-data/ForestCoverType.*
+# Streams. The synthetic ones are built from lens/streams.py by the scripts in
+# data/, or on demand the first time a run asks for one; the real ones are
+# downloaded. The definitions are committed, the bytes are not.
+data/*.arff
+data/*.csv
 *.arff.partial
 
-# Per-instance probe archives. They are the input of
-# experiments/export_figure_data.py, whose compact output is committed instead.
+# Everything a run produces. The code that produces it is what is committed.
+results/
+figures/output/
 *.npz
-results/probes/
 
 .DS_Store

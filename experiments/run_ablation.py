@@ -254,7 +254,7 @@ def _print_summary(df):
     mmr = df[df["config"].isin(MMR_CONFIGS)]
     if not mmr.empty and mmr["diversity_measure"].nunique() > 1:
         print("\n" + "=" * 65)
-        print("  RANKING DAS DIVERSITY MEASURES (configs MMR 3/4)")
+        print("  Ranking of the diversity measures (the MMR configurations)")
         print("=" * 65)
         acc = mmr.groupby(["dataset", "diversity_measure"])["global_acc"].mean().reset_index()
         acc["rank"] = acc.groupby("dataset")["global_acc"].rank(ascending=False)
