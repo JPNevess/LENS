@@ -1,36 +1,31 @@
-"""LENS with margin-weighted self-training, the ablation of the admission rule.
+"""LENS-M: maximal marginal relevance selection with consensus-weighted
+disagreement training.
 
-Selection is the full mechanism: maximal marginal relevance over the referee's
-competence estimate. Training is the simpler of the two self-training rules: a
-member learns from its own prediction, weighted by the geometric mean of
-estimated accuracy and margin.
+Both axes are switched on. Selection is maximal marginal relevance over
+sqrt(A-hat * M); training is learning by disagreement, with the pseudo-label
+weighted by the geometric mean of the member's estimated accuracy and its
+margin.
 
-It isolates one thing. Against the full method it measures what the consensus
-based admission rule adds over self-training on one's own prediction.
-
-Mechanism
----------
-The referee drives both halves: it scores members for selection and it weights
-the pseudo-labels. The difference from the full method is that here the
-pseudo-label is always the member's own prediction.
+It differs from the full method in the pseudo-label weight alone, which is what
+makes the pair a clean test of that one choice.
 
 Selection at prediction time
     members picked greedily by maximal marginal relevance over sqrt(A-hat * M) and pairwise diversity
 
 Training on unlabelled instances
-    each member trains on its own prediction when its margin clears the threshold, weighted by sqrt(A-hat * M) times label density
+    a member trains on the majority label of the confident others when they disagree with it, weighted by sqrt(A-hat * M)
 
-Relation to the published method
---------------------------------
-This is one cell of the factorial ablation of the proposed method.
+What this file is
+-----------------
+The full method with a different pseudo-label weighting: ``CONFIG_10`` of
+``lens/config.py``. Reported alongside LENS to show what the weighting is
+worth.
 
 Every entry point in ``benchmarks/`` shares the evaluation harness of this
-repository: the same base learners, the same ensemble size, the same streams and
-the same prequential test-then-train protocol. That is deliberate. It means a
-difference between two columns of the results table is a difference of
+repository: the same base learners, the same ensemble size, the same streams
+and the same prequential test-then-train protocol. That is deliberate. It means
+a difference between two rows of the results table is a difference of
 mechanism, not of implementation effort or of tuning.
-
-Reference: this work
 """
 import argparse
 import os
@@ -46,18 +41,18 @@ from lens.config import (DIVERSITY_DISAGREEMENT, CONFIG_10,
                          INF_MMR, TR_TRAIN_C)
 from lens.ensemble import LENS
 from lens.evaluation import run_experiment
+from lens.streams import resolve as resolve_stream
 
 # --------------------------------------------------------------------- identity
 CONFIG = CONFIG_10
 NAME = "LENS-M"
-REFERENCE = "this work"
 
 INFERENCE_MODE = INF_MMR
 TRAINING_MODE = TR_TRAIN_C
 
 # --------------------------------------------------------------------- protocol
-# Shared by every method in the comparison. Changing any of these here would make
-# this column incomparable with the others.
+# Shared by every entry point in this directory. Changing any of these here would
+# make this row incomparable with the others.
 ENSEMBLE_SIZE = 30       # members voting at any time
 POOL_SIZE = 70           # background learners kept to replace weak members
 GRACE_PERIOD = 50        # instances a leaf sees before a split is considered
@@ -67,22 +62,29 @@ LAMBDA_PARAM = 0.5       # initial relevance/diversity trade-off
 DIVERSITY_MEASURE = DIVERSITY_DISAGREEMENT
 UNSUPERVISED_DRIFT = False
 
-DATA_DIR = os.path.join(_ROOT, "data")
 RESULTS_CSV = os.path.join(_ROOT, "results", "benchmarks", "runs.csv")
 
+# The synthetic streams are generated from lens/streams.py on first use and
+# cached under data/; the real ones have to be present there already.
 DATASETS = ("AGR_a", "AGR_g", "RBF_m", "RBF_f", "LED_a", "LED_g",
             "airlines", "Electricity", "CovtFD")
 LABEL_PCTS = (5, 1)
 
-# Every reported cell is the mean over these five seeds. A seed fixes which
-# instances are labelled and how the learners are initialised; a single seed can
-# sit more than a point away from the mean on the noisier streams.
-SEEDS = (42, 43, 44, 45, 46)
+# Every reported cell is the mean over these five seeds. A seed initialises the
+# learners -- feature subspaces, tie-breaking, the background pool -- and, offset
+# by LABEL_SEED_OFFSET, also draws which instances arrive labelled. A single seed
+# can sit more than a point away from the mean on the noisier streams, so one
+# seed is not comparable with a reported cell.
+SEEDS = (101, 217, 349, 523, 811)
+
+# Keeps the labelled subset from being a deterministic function of the learner
+# initialisation, so the two can be varied independently.
+LABEL_SEED_OFFSET = 4703
 
 ROW_COLUMNS = [
     "dataset", "config", "method", "label_pct", "diversity_measure", "seed",
-    "inference_mode", "training_mode", "global_acc", "f1_score", "drift_count",
-    "total_instances", "elapsed_s", "error",
+    "label_seed", "inference_mode", "training_mode", "global_acc", "f1_score",
+    "drift_count", "total_instances", "elapsed_s", "error",
 ]
 
 
@@ -97,24 +99,18 @@ class LensM(LENS):
 
 # ------------------------------------------------------------------------ runner
 def dataset_path(name):
-    """Resolve a stream name to a file under ``data/``."""
-    for ext in (".arff", ".csv"):
-        path = os.path.join(DATA_DIR, name + ext)
-        if os.path.exists(path):
-            return path
-    raise FileNotFoundError(
-        f"stream {name!r} not found in {DATA_DIR}. The synthetic streams and the "
-        f"feature-drift Covertype variant are produced by "
-        f"experiments/make_datasets.py.")
+    """Resolve a stream name to a file, generating it if it is synthetic."""
+    return resolve_stream(name)
 
 
 def evaluate(path, label_pct, seed, max_instances=0):
-    """One prequential run of this method on one stream."""
+    """One prequential run of this configuration on one stream."""
     return run_experiment(
         dataset_path=path,
         config=CONFIG,
         label_pct=label_pct,
         seed=seed,
+        label_seed=seed + LABEL_SEED_OFFSET,
         inference_mode=INFERENCE_MODE,
         training_mode=TRAINING_MODE,
         ensemble_cls=LensM,
@@ -138,6 +134,7 @@ def _row(dataset, label_pct, seed, result):
         "label_pct": label_pct,
         "diversity_measure": DIVERSITY_MEASURE,
         "seed": seed,
+        "label_seed": seed + LABEL_SEED_OFFSET,
         "inference_mode": INFERENCE_MODE,
         "training_mode": TRAINING_MODE,
         "global_acc": result.get("global_acc"),
@@ -179,14 +176,15 @@ def report_cells(rows):
 
 def build_parser():
     p = argparse.ArgumentParser(
-        description=f"{NAME} -- {REFERENCE}",
+        description=f"{NAME} -- the full method, with pseudo-labels weighted by sqrt(A-hat * M)",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     p.add_argument("--datasets", nargs="+", default=list(DATASETS),
                    help="stream names to evaluate")
     p.add_argument("--label-pcts", type=int, nargs="+", default=list(LABEL_PCTS),
                    help="percentage of instances whose label is revealed")
     p.add_argument("--seeds", type=int, nargs="+", default=list(SEEDS),
-                   help="one run per seed; the seed selects the labelled subset")
+                   help="one run per seed; the seed initialises the learners and "
+                        "selects the labelled subset")
     p.add_argument("--max-instances", type=int, default=0,
                    help="truncate each stream, for a quick check; 0 runs it whole")
     p.add_argument("--out", default=RESULTS_CSV, help="CSV to append rows to")

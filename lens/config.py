@@ -7,10 +7,19 @@ The ensemble is parametrised along two orthogonal axes:
 * ``training_mode`` -- how unlabelled instances are turned into pseudo-labels and
   weighted during training (semi-supervised learning).
 
-Each benchmark in ``benchmarks/`` is one point in this space. The ``config_*``
+Each entry point in ``benchmarks/`` is one point in this space. The ``config_*``
 identifiers below are the keys under which every run is stored in ``results/``,
-so they are kept stable; ``METHOD_NAMES`` maps them to the names used in the
-paper.
+so they are kept stable; ``METHOD_NAMES`` maps them to the mechanism names used
+in the paper.
+
+Every configuration here is a cell of this repository's own factorial ablation.
+None of them is a port of a method from the literature, and none should be
+presented as one. Mechanisms are named after what they compute -- margin,
+referee accuracy, maximal marginal relevance -- and where a cell isolates the
+idea a published method is built around, the corresponding file in
+``benchmarks/`` says so in prose without claiming to reproduce that method's
+results. ``CONFIG_SLEADE`` is the one exception: it does not go through this
+package at all, it runs the reference implementation shipped with CapyMOA.
 """
 
 # Inference (dynamic ensemble selection).
@@ -55,9 +64,8 @@ CONFIG_11 = "config_11"
 CONFIG_12 = "config_12"
 CONFIG_13 = "config_13"
 
-# (inference_mode, training_mode) for every stored configuration. The first nine
-# reproduce a published mechanism; the last four are the cells of the factorial
-# ablation that are not baselines.
+# (inference_mode, training_mode) for every stored configuration: every cell of
+# the factorial ablation, including the two that make up the full method.
 PAPER_CONFIGS = {
     CONFIG_BASE: (INF_NONE, TR_NONE),
     CONFIG_1: (INF_MARGIN, TR_NONE),
@@ -76,17 +84,19 @@ PAPER_CONFIGS = {
 }
 
 # Names used in the paper for the configurations that appear in its tables and
-# figures.
+# figures. Each one names the mechanism the cell switches on, so a row of the
+# table can be read as "what does this mechanism buy" rather than as a contest
+# between implementations.
 METHOD_NAMES = {
-    CONFIG_BASE: "ARF",
-    CONFIG_1: "DyAbst",
-    CONFIG_2: "Meta-BR",
-    CONFIG_3: "DEMS",
-    CONFIG_4: "DynED",
-    CONFIG_5: "Self-train",
-    CONFIG_6: "SCo-For",
-    CONFIG_13: "LST*",
-    CONFIG_SLEADE: "SLEADE",
-    CONFIG_10: "LENS-M",
-    CONFIG_12: "LENS",
+    CONFIG_BASE: "Uniform",        # no selection, no self-training
+    CONFIG_1: "Margin",            # selection by prediction margin
+    CONFIG_2: "RefereeAcc",        # selection by referee-estimated accuracy
+    CONFIG_3: "Competence",        # selection by sqrt(A-hat * M)
+    CONFIG_4: "MMR",               # selection by maximal marginal relevance
+    CONFIG_5: "SelfTrain-M",       # self-training gated by margin
+    CONFIG_6: "Disagree",          # learning by disagreement
+    CONFIG_13: "SelfTrain-A",      # self-training gated by referee accuracy
+    CONFIG_SLEADE: "SLEADE",       # external reference implementation
+    CONFIG_10: "LENS-M",           # MMR + disagreement, consensus weighting
+    CONFIG_12: "LENS",             # the full method
 }

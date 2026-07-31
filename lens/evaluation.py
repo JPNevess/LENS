@@ -31,7 +31,7 @@ def run_experiment(dataset_path, config, label_pct,
                    inference_mode=None, training_mode=None, self_train_margin=0.5,
                    mmr_soft_weights=True, lambda_stable=0.85,
                    initial_labeled=1000,
-                   max_instances=0, seed=42, verbose=True,
+                   max_instances=0, seed=42, label_seed=None, verbose=True,
                    history_dir=None, diag_every=500, diag_all=False,
                    admission=False, admission_cap=150000,
                    referee_mode="mlhat", referee_probe=False,
@@ -41,6 +41,12 @@ def run_experiment(dataset_path, config, label_pct,
 
     ``ensemble_cls`` builds the ensemble; the entry points in ``benchmarks/`` pass
     their own subclass so the mechanism they implement is the one that runs.
+
+    ``seed`` initialises the learners -- feature subspaces, tie-breaking, pool
+    construction. ``label_seed`` decides which instances arrive with their label
+    revealed, and defaults to ``seed`` when it is not given. They are separate so
+    that the labelled subset can be held fixed while the ensemble is reseeded,
+    or the other way round.
     """
     if config == CONFIG_SLEADE:
         return _run_sleade_baseline(
@@ -51,6 +57,7 @@ def run_experiment(dataset_path, config, label_pct,
             initial_labeled  = initial_labeled,
             max_instances    = max_instances,
             seed             = seed,
+            label_seed       = label_seed,
             verbose          = verbose,
             history_dir      = history_dir,
             diag_every       = diag_every,
@@ -95,7 +102,27 @@ def run_experiment(dataset_path, config, label_pct,
     import random as _random
     _random.seed(seed)
 
+    # Which instances arrive labelled. The budget is one label per block of
+    # ``label_interval`` instances, as before, but the position inside the block
+    # is drawn rather than fixed at the start of it: a fixed position lets a
+    # learner synchronise with the labelling period, which flatters any method
+    # that adapts on a schedule. The draw has its own generator, independent of
+    # the one seeding the learners, so the labelled subset and the learner
+    # initialisation can be varied separately.
     label_interval   = max(1, 100 // label_pct)
+    label_rng        = np.random.RandomState(
+        seed if label_seed is None else label_seed)
+    label_offset     = int(label_rng.randint(label_interval))
+
+    def _is_labelled(t):
+        nonlocal label_offset
+        at_block_start = t % label_interval == 0
+        if at_block_start:
+            # Draw the position for the block that starts here, then reveal the
+            # instance at that offset within it.
+            label_offset = int(label_rng.randint(label_interval))
+        return t % label_interval == label_offset
+
     rolling_correct  = collections.deque(maxlen=100)
     acc_hist         = collections.deque(maxlen=10000)
     global_correct   = 0
@@ -142,7 +169,7 @@ def run_experiment(dataset_path, config, label_pct,
                 probe_preds_chunks.append(
                     np.asarray(ensemble._last_member_preds, dtype=np.int16))
 
-        if in_warmup or total % label_interval == 0:
+        if in_warmup or _is_labelled(total):
             ensemble.train(instance, x_dict, y_true)
         else:
             if admission:
@@ -248,6 +275,7 @@ def run_experiment(dataset_path, config, label_pct,
         "label_pct"          : label_pct,
         "diversity_measure"  : diversity_measure,
         "seed"               : seed,
+        "label_seed"         : seed if label_seed is None else label_seed,
         "inference_mode"     : ensemble.inference_mode,
         "training_mode"      : ensemble.training_mode,
         "use_mmr"            : ensemble.use_mmr,

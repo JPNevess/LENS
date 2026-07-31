@@ -8,7 +8,6 @@ measures the signal itself rather than the whole system. Feeds Figure 9.
 """
 
 import argparse
-import glob
 import os
 import sys
 import time
@@ -20,12 +19,12 @@ PROBE_NAME = "admission"
 
 import numpy as np, pandas as pd
 
-DATASETS_DIR = os.path.join(_ROOT, "data")
+from lens import streams
+
 OUT_DIR      = os.path.join(_ROOT, "results", "admission")
 SAMPLES_DIR  = os.path.join(_ROOT, "results", "probes", PROBE_NAME)
 
 EXCLUDE = ("Rialto", "NOAA", "airlines_without_AirportToFrom", "RBF_a", "ForestCoverType")
-BIG     = ("CovtFD", "ForestCoverType", "PokerHand")
 
 CONFIG_SIGNAL = {
     "config_5":  ("M", "M = margin  (config 5, self-train)",             "#4C72B0", "o"),
@@ -245,17 +244,9 @@ def main():
                          "config_8 under binary_relevance)")
     args = ap.parse_args()
 
-    if args.datasets:
-        paths = []
-        for n in args.datasets:
-            paths += sorted(glob.glob(os.path.join(DATASETS_DIR, f"*{n}*.arff")))
-    else:
-        paths = sorted(glob.glob(os.path.join(DATASETS_DIR, "*.arff")))
-        paths = [p for p in paths
-                 if os.path.splitext(os.path.basename(p))[0] not in EXCLUDE]
-        if not args.include_big:
-            paths = [p for p in paths
-                     if os.path.splitext(os.path.basename(p))[0] not in BIG]
+    names = args.datasets or [n for n in streams.DEFAULT if n not in EXCLUDE]
+    paths = streams.resolve_all(
+        names, include_big=bool(args.datasets or args.include_big))
     paths = sorted(paths, key=os.path.getsize)
     names = [os.path.splitext(os.path.basename(p))[0] for p in paths]
     print(f"Datasets: {names}")

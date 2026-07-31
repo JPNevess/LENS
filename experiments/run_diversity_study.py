@@ -8,7 +8,6 @@ pairwise diversity that each approach would see. Feeds Figure 1 (top).
 """
 
 import argparse
-import glob
 import os
 import sys
 import time
@@ -20,7 +19,8 @@ PROBE_NAME = "diversity"
 
 import numpy as np, pandas as pd
 
-DATASETS_DIR = os.path.join(_ROOT, "data")
+from lens import streams
+
 OUT_DIR      = os.path.join(_ROOT, "results", "diversity_study")
 SAMPLES_DIR  = os.path.join(_ROOT, "results", "probes", PROBE_NAME)
 CSV_PATH     = os.path.join(OUT_DIR, "runs.csv")
@@ -191,13 +191,8 @@ def main():
     ap.add_argument("--plots-only", action="store_true", dest="plots_only")
     args = ap.parse_args()
 
-    if args.datasets:
-        paths = []
-        for nm in args.datasets:
-            paths += sorted(glob.glob(os.path.join(DATASETS_DIR, f"*{nm}*.arff")))
-    else:
-        paths = [p for p in sorted(glob.glob(os.path.join(DATASETS_DIR, "*.arff")))
-                 if os.path.splitext(os.path.basename(p))[0] not in EXCLUDE]
+    names = args.datasets or [n for n in streams.DEFAULT if n not in EXCLUDE]
+    paths = streams.resolve_all(names)
     paths = sorted(paths, key=os.path.getsize)
     names = [os.path.splitext(os.path.basename(p))[0] for p in paths]
     configs = tuple(args.configs)

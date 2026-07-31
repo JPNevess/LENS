@@ -73,9 +73,10 @@ def _worker(task):
     ds, config, lp, tag = task["ds"], task["config"], task["lp"], task["tag"]
     print(f"  >> START {ds:8s} {config:10s} {lp:2d}%  ω={tag}  (pid={os.getpid()})",
           flush=True)
-    import MMR_DEMS as MD
-    res = MD.run_experiment(
-        dataset_path       = os.path.join(_ROOT, "data", f"{ds}.arff"),
+    from lens import streams
+    from lens.evaluation import run_experiment
+    res = run_experiment(
+        dataset_path       = streams.resolve(ds),
         config             = config,
         label_pct          = lp,
         seed               = SEED,

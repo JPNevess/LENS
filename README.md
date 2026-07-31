@@ -45,38 +45,47 @@ python make_all.py
 Output goes to `figures/output/`. Each script is standalone and states at the top
 which figure it draws and which file it reads.
 
-## Running a method
+## Running a configuration
 
-Each file in `benchmarks/` is a standalone evaluation of one method. It states
-the mechanism, spells out the protocol constants it runs under, implements the
-method's selection rule, and has its own command line. Nothing has to be read
-alongside it to know what was run.
+Each file in `benchmarks/` is a standalone evaluation of one configuration. It
+states the mechanism, spells out the protocol constants it runs under,
+implements the selection rule, and has its own command line. Nothing has to be
+read alongside it to know what was run.
 
 The protocol constants are deliberately identical across the files: same base
 learners, same ensemble size, same streams, same label rates, same seeds, same
 prequential test-then-train evaluation. That is what lets the table be read as a
-comparison of mechanisms — a difference between two columns is a difference in
+comparison of mechanisms — a difference between two rows is a difference in
 selection or self-training, not in tuning or in implementation effort.
 
 ```bash
-python benchmarks/run_lens.py                       # the full method
-python benchmarks/our_implementation_of_dyned.py    # one baseline
+python benchmarks/run_lens.py                        # the full method
+python benchmarks/ablation_mmr_selection.py          # one cell of the grid
 python benchmarks/run_lens.py --datasets Electricity --label-pcts 5
 ```
 
 Rows are appended to `results/benchmarks/runs.csv`, one per run, and the script
 prints the cell means at the end.
 
-Every reported number is the mean over five seeds, which is the default. A seed
-fixes both which instances are labelled and the initialisation of the learners,
-and on the noisier streams a single seed sits more than a point away from that
-mean, so `--seeds 42` alone is not comparable with the reported values.
+### What these files are, and what they are not
 
-The baselines named `our_implementation_of_*` reproduce the mechanism of a
-published method inside this harness; they are not ports of the original
-implementations, and each file says at the top how it relates to the method it is
-named after. `sleade_implementation.py` is the exception: it runs the reference
-implementation shipped with CapyMOA, through CapyMOA's own evaluator.
+**The `ablation_*` files are cells of this repository's own factorial ablation,
+not implementations of published methods.** Each is the LENS ensemble with the
+selection and self-training axes set to one combination, and each is named after
+the mechanism it switches on — `Margin`, `RefereeAcc`, `MMR`, `SelfTrain-M` and
+so on. Several of them isolate an idea that a published method is built around,
+and the file says so in prose, but none of them is a port of that method and no
+row of the results table should be read as a measurement of it.
+
+`sleade_implementation.py` is the one exception. It runs the SLEADE
+implementation shipped with CapyMOA, through CapyMOA's own evaluator, so it is
+the single external point of comparison in the table.
+
+Every reported number is the mean over five seeds, which is the default. A seed
+initialises the learners and, offset by `LABEL_SEED_OFFSET`, also draws which
+instances arrive labelled; on the noisier streams a single seed sits more than a
+point away from that mean, so one seed alone is not comparable with the reported
+values.
 
 ## Re-running the studies
 
@@ -106,14 +115,45 @@ python experiments/export_figure_data.py --source results/probes
 ## Layout
 
 ```
-lens/           the method: ensemble, referee, evaluation loop
-benchmarks/     one standalone script per method in the comparison
-experiments/    the studies that produce results/, and the dataset generator
+lens/           the method: ensemble, referee, evaluation loop, stream generators
+benchmarks/     one standalone script per configuration in the comparison
+experiments/    the studies that produce results/
 figures/        one script per figure, reading only results/
 results/        committed CSVs the figures are built from
-data/           the streams (see data/README.md)
+data/           the real streams, and the cache for generated ones
 third_party/    vendored MLHAT reference implementation
 ```
+
+## Streams
+
+The synthetic streams are not shipped as files. They are defined by
+`lens/streams.py` and generated the first time a run asks for one, then cached
+under `data/`; the definition is what is committed, not the bytes. The real
+streams cannot be generated and have to be present in `data/` — see
+`data/README.md`.
+
+```bash
+python experiments/make_datasets.py                 # build them all ahead of time
+python experiments/make_datasets.py --datasets LED_a RBF_m --force
+```
+
+Two seeds decide what a run sees, and they are kept apart on purpose:
+`STREAM_SEED` in `lens/streams.py` fixes the concept geometry, the drift
+transitions and the instance draw, while `label_seed` decides which instances
+arrive with their label revealed. Both synthetic and real streams have a
+`label_seed`; only synthetic ones have a `STREAM_SEED`.
+
+### Provenance of the committed results
+
+The CSVs under `results/` were produced from an earlier draw of the synthetic
+streams, before the drift geometry in `lens/streams.py` was changed: transitions
+are now wider, abrupt change points are irregularly spaced rather than evenly
+spaced, the seeds differ, and the labelled subset is now drawn rather than taken
+at a fixed period. **Regenerating the streams and re-running will therefore not
+reproduce the numbers in `results/` exactly.** The figures are built from the
+committed CSVs, so they are unaffected; anyone re-running the studies from
+scratch should expect different values and should re-run every configuration
+rather than comparing new runs against the committed ones.
 
 ## Third-party code
 

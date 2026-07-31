@@ -9,7 +9,6 @@ can be stopped and resumed.
 """
 
 import argparse
-import glob
 import os
 import sys
 import time
@@ -29,6 +28,7 @@ from lens.config import (
     INF_MMR,
     PAPER_CONFIGS,
 )
+from lens import streams
 from lens.evaluation import run_experiment
 
 ALL_DIVERSITIES = (
@@ -39,7 +39,6 @@ MMR_CONFIGS = tuple(c for c, (inf, _) in PAPER_CONFIGS.items() if inf == INF_MMR
 UNSUP_DRIFT_CONFIGS = ()
 
 
-DATASETS_DIR  = os.path.join(_ROOT, "data")
 OUTPUT_DIR    = os.path.join(_ROOT, "results", "ablation")
 CSV_NAME      = "runs.csv"
 RESULTS_BASE  = os.path.join(_ROOT, "results")
@@ -56,7 +55,6 @@ LAMBDA_PARAM  = 0.5
 DIVERSITY     = DIVERSITY_DISAGREEMENT
 MAX_WORKERS   = 2
 
-BIG_DATASETS  = ("CovtFD", "ForestCoverType", "PokerHand")   
 
 
 def _worker(kwargs):
@@ -308,25 +306,11 @@ def _parse_args():
 def main():
     args = _parse_args()
 
-    if args.datasets:
-        dataset_paths = []
-        for name in args.datasets:
-            matches = sorted(glob.glob(os.path.join(DATASETS_DIR, f"*{name}*.arff")))
-            if not matches:
-                print(f"  [skip] {name!r} not found in {DATASETS_DIR}/")
-            dataset_paths.extend(matches)
-    else:
-        dataset_paths = sorted(glob.glob(os.path.join(DATASETS_DIR, "*.arff")))
-        big = [p for p in dataset_paths
-               if os.path.splitext(os.path.basename(p))[0] in BIG_DATASETS]
-        if big and not args.include_big:
-            print(f"  [skip] large streams excluded by default: "
-                  f"{[os.path.basename(p) for p in big]} "
-                  f"(pass --include-big or name them in --datasets to run them)")
-            dataset_paths = [p for p in dataset_paths if p not in big]
+    dataset_paths = streams.resolve_all(
+        args.datasets, include_big=bool(args.datasets or args.include_big))
 
     if not dataset_paths:
-        print(f"no .arff found in '{DATASETS_DIR}/'; nothing to run")
+        print("no streams resolved; nothing to run")
         return
 
     dataset_paths = sorted(dataset_paths, key=os.path.getsize)

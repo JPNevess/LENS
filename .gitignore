@@ -4,10 +4,20 @@ __pycache__/
 .venv/
 venv/
 
-# Large source data: the feature-drift Covertype variant and its source are
-# built locally, see data/README.md
+# Generated streams. The synthetic ones are built from lens/streams.py on first
+# use and cached here, so the definition is committed and the bytes are not. The
+# feature-drift Covertype variant and its source are built locally too, see
+# data/README.md
+data/AGR_a.arff
+data/AGR_g.arff
+data/LED_a.arff
+data/LED_g.arff
+data/RBF_a.arff
+data/RBF_f.arff
+data/RBF_m.arff
 data/CovtFD.arff
 data/ForestCoverType.*
+*.arff.partial
 
 # Per-instance probe archives. They are the input of
 # experiments/export_figure_data.py, whose compact output is committed instead.

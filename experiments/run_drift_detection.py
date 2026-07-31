@@ -124,7 +124,7 @@ def _run_dataset(task):
     print(f"  >> START {ds:8s} seed={seed} {lp}% labels  (pid={os.getpid()})",
           flush=True)
 
-    import MMR_DEMS as MD
+    from lens import streams
     from lens.ensemble import (ARFFStream, HoeffdingAdaptiveTree, ADWIN,
                           LabeledInstance, MLHAT, _BinaryRelevance,
                           _river_tree, _train_weighted)
@@ -133,7 +133,7 @@ def _run_dataset(task):
     np.random.seed(seed)
     import random as _random; _random.seed(seed)
 
-    stream = ARFFStream(os.path.join(_ROOT, "data", f"{ds}.arff"))
+    stream = ARFFStream(streams.resolve(ds))
     schema = stream.get_schema()
     nfeat  = schema.get_num_attributes()
     ssize  = max(1, int(round(SUBSPACE_FRAC * nfeat)))

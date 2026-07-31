@@ -21,9 +21,13 @@ from ..history import _rolling_accuracy, _write_history_csv
 
 def _run_sleade_baseline(dataset_path, label_pct, ensemble_size,
                          diversity_measure, max_instances, seed, verbose=True,
-                         initial_labeled=1000, history_dir=None, diag_every=500):
+                         initial_labeled=1000, history_dir=None, diag_every=500,
+                         label_seed=None):
     """Run the reference SLEADE implementation from CapyMOA under prequential
     semi-supervised evaluation.
+
+    ``seed`` initialises the learner and ``label_seed`` draws the labelled
+    subset, matching the split used by :func:`lens.evaluation.run_experiment`.
     """
     from capymoa.ssl import SLEADE
     from capymoa.evaluation import prequential_ssl_evaluation
@@ -50,7 +54,7 @@ def _run_sleade_baseline(dataset_path, label_pct, ensemble_size,
         initial_window_size= initial_labeled,
         window_size        = 1000,
         max_instances      = (max_instances if max_instances > 0 else None),
-        random_seed        = seed,
+        random_seed        = (seed if label_seed is None else label_seed),
         store_predictions  = True,
         store_y            = True,
     )

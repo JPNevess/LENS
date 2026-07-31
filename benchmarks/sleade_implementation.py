@@ -1,10 +1,13 @@
 """SLEADE, run from the authors' own implementation.
 
-This column is not a reimplementation. It runs the SLEADE that ships with
-CapyMOA, driven by CapyMOA's own prequential semi-supervised evaluator, so the
-comparison is against the authors' code rather than against our reading of their
-paper. It is the only entry point in this directory that does not go through the
-ensemble in ``lens/``.
+This row is not a reimplementation. It runs the SLEADE that ships with CapyMOA,
+driven by CapyMOA's own prequential semi-supervised evaluator, so the comparison
+is against the authors' code rather than against our reading of their paper.
+
+It is the only entry point in this directory that is a published method at all.
+Every other one is a cell of this repository's own ablation grid, named after
+the mechanism it switches on; this is the single external point of reference the
+results table has.
 
 Mechanism
 ---------
@@ -16,15 +19,15 @@ members. Drift detection and member replacement are handled internally by SRP.
 What is held fixed with the rest of the comparison
 --------------------------------------------------
 The ensemble size, the streams, the label rates, the seeds and the warm-up window
-are the ones used by every other entry point here, so the columns line up. The
-base learner is SRP's own, because replacing it would no longer be the authors'
+are the ones used by every other entry point here, so the rows line up. The base
+learner is SRP's own, because replacing it would no longer be the authors'
 method.
 
 One detail is worth stating, because it is what makes the accuracies comparable
 at all: CapyMOA's evaluator trains on the first ``INITIAL_LABELED`` instances but
 does not score them, so a 100,000-instance stream reports 99,000. The evaluation
 loop in ``lens/evaluation.py`` excludes the same warm-up window. Without that,
-this column would be scored on an easier stream than the others.
+this row would be scored on an easier stream than the others.
 
 Reference: Gomes et al., SLEADE: Disagreement-Based Semi-Supervised Learning for
 Sparsely Labeled Evolving Data Streams, IEEE TKDE, 2025.
@@ -49,6 +52,7 @@ from capymoa.stream import ARFFStream
 from sklearn.metrics import f1_score
 
 from lens.config import CONFIG_SLEADE, DIVERSITY_DISAGREEMENT
+from lens.streams import resolve as resolve_stream
 
 # --------------------------------------------------------------------- identity
 CONFIG = CONFIG_SLEADE
@@ -60,34 +64,29 @@ ENSEMBLE_SIZE = 30       # members, matching every other method
 INITIAL_LABELED = 1000   # fully labelled warm-up, trained on but not scored
 WINDOW_SIZE = 1000       # evaluator's reporting window
 
-DATA_DIR = os.path.join(_ROOT, "data")
 RESULTS_CSV = os.path.join(_ROOT, "results", "benchmarks", "runs.csv")
 
 DATASETS = ("AGR_a", "AGR_g", "RBF_m", "RBF_f", "LED_a", "LED_g",
             "airlines", "Electricity", "CovtFD")
 LABEL_PCTS = (5, 1)
 
-# Every reported cell is the mean over these five seeds.
-SEEDS = (42, 43, 44, 45, 46)
+# Every reported cell is the mean over these five seeds, the same ones the other
+# entry points use. A seed initialises the learner and, offset by
+# LABEL_SEED_OFFSET, draws which instances arrive labelled.
+SEEDS = (101, 217, 349, 523, 811)
+LABEL_SEED_OFFSET = 4703
 
 ROW_COLUMNS = [
     "dataset", "config", "method", "label_pct", "diversity_measure", "seed",
-    "inference_mode", "training_mode", "global_acc", "f1_score", "drift_count",
-    "total_instances", "elapsed_s", "error",
+    "label_seed", "inference_mode", "training_mode", "global_acc", "f1_score",
+    "drift_count", "total_instances", "elapsed_s", "error",
 ]
 
 
 # ------------------------------------------------------------------------ runner
 def dataset_path(name):
-    """Resolve a stream name to a file under ``data/``."""
-    for ext in (".arff", ".csv"):
-        path = os.path.join(DATA_DIR, name + ext)
-        if os.path.exists(path):
-            return path
-    raise FileNotFoundError(
-        f"stream {name!r} not found in {DATA_DIR}. The synthetic streams and the "
-        f"feature-drift Covertype variant are produced by "
-        f"experiments/make_datasets.py.")
+    """Resolve a stream name to a file, generating it if it is synthetic."""
+    return resolve_stream(name)
 
 
 def evaluate(path, label_pct, seed, max_instances=0):
@@ -107,7 +106,7 @@ def evaluate(path, label_pct, seed, max_instances=0):
         initial_window_size=INITIAL_LABELED,
         window_size=WINDOW_SIZE,
         max_instances=(max_instances if max_instances > 0 else None),
-        random_seed=seed,
+        random_seed=seed + LABEL_SEED_OFFSET,
         store_predictions=True,
         store_y=True,
     )
@@ -142,6 +141,7 @@ def _row(dataset, label_pct, seed, result):
         "label_pct": label_pct,
         "diversity_measure": DIVERSITY_DISAGREEMENT,
         "seed": seed,
+        "label_seed": seed + LABEL_SEED_OFFSET,
         "inference_mode": "capymoa_sleade",
         "training_mode": "capymoa_sleade",
         "global_acc": result.get("global_acc"),

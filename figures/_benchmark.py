@@ -11,24 +11,28 @@ import pandas as pd
 from _common import BENCHMARK_CSV, SEEDS_CSV
 
 # Column order of the table, which is also the order of the methods in Figure 4.
+# Every entry except SLEADE is a cell of this repository's own ablation grid and
+# is named after the mechanism it switches on; SLEADE is the reference
+# implementation from CapyMOA. See lens/config.py.
 METHODS = [
-    ("config_base", "ARF"),
-    ("config_1", "DyAbst"),
-    ("config_2", r"Meta$_{BR}$"),
-    ("config_3", "DEMS"),
-    ("config_4", "DynED"),
-    ("config_5", "Self-train"),
-    ("config_13", "LST*"),
-    ("config_6", "SCo-For"),
+    ("config_base", "Uniform"),
+    ("config_1", "Margin"),
+    ("config_2", r"Referee$_A$"),
+    ("config_3", "Competence"),
+    ("config_4", "MMR"),
+    ("config_5", r"SelfTrain$_M$"),
+    ("config_13", r"SelfTrain$_A$"),
+    ("config_6", "Disagree"),
     ("config_0", "SLEADE"),
     ("config_10", r"LENS$^M$"),
     ("config_12", "LENS"),
 ]
 CONFIGS = [c for c, _ in METHODS]
-PLAIN_NAMES = {"config_base": "ARF", "config_1": "DyAbst", "config_2": "Meta-BR",
-               "config_3": "DEMS", "config_4": "DynED", "config_5": "Self-train",
-               "config_13": "LST*", "config_6": "SCo-For", "config_0": "SLEADE",
-               "config_10": "LENS-M", "config_12": "LENS"}
+PLAIN_NAMES = {"config_base": "Uniform", "config_1": "Margin",
+               "config_2": "RefereeAcc", "config_3": "Competence",
+               "config_4": "MMR", "config_5": "SelfTrain-M",
+               "config_13": "SelfTrain-A", "config_6": "Disagree",
+               "config_0": "SLEADE", "config_10": "LENS-M", "config_12": "LENS"}
 PROPOSED = "config_12"
 
 # Row order of the table.
