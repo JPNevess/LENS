@@ -33,7 +33,7 @@ OUT_DIR = streams.DATA_DIR
 # CovtFD is not seeded from lens.streams: it is a transformation of a real file,
 # not a generated stream, so its seed only drives the noise attributes and the
 # permutation that produces the feature drift.
-COVTFD_SEED = 3607
+COVTFD_SEED = 100
 COVTFD_NOISE_ATTRS = 50
 COVTFD_DRIFTING_COLS = 10
 

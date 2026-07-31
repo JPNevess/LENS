@@ -5,7 +5,7 @@ measures how much of the difference between methods is due to that draw. Results
 go to results/seeds/runs.csv and are merged with the single-seed grid by the
 figures.
 
-    python experiments/run_seeds.py --seeds 42 43 44 45 46
+    python experiments/run_seeds.py --seeds 101 102 103 104 105
 """
 
 import argparse
@@ -35,7 +35,7 @@ CSV_NAME      = "runs.csv"
 
 CONFIGS       = (CONFIG_0,) + tuple(PAPER_CONFIGS.keys())
 LABEL_PCTS    = (5, 1)
-SEEDS         = (42, 43, 44, 45, 46)
+SEEDS         = (101, 102, 103, 104, 105)
 ENSEMBLE_SIZE = 30
 GRACE_PERIOD  = 50
 TIE_THRESHOLD = 0.05

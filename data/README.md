@@ -1,8 +1,8 @@
 # Streams
 
-No stream is committed. This directory holds the scripts that build the
-synthetic ones and the instructions for obtaining the real ones. Generated and
-downloaded files land here and are ignored by git.
+This directory holds the scripts that build the synthetic streams and the
+instructions for obtaining the real ones. Generated and downloaded files land
+here and are ignored by git.
 
 ## Synthetic: one script each
 
@@ -25,9 +25,8 @@ python data/make_led_a.py --instances 50000
 python data/make_led_a.py --seed 1234 --out /tmp/LED_a.arff
 ```
 
-Building them by hand is optional: an experiment generates the stream it needs on
-first use and caches it here. `RBF_a` is defined but is not part of the default
-sweep.
+Building them by hand is optional: an experiment generates the stream it needs
+on first use and caches it here.
 
 To build all of them at once:
 

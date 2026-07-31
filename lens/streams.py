@@ -33,11 +33,11 @@ DATA_DIR = os.path.join(_ROOT, "data")
 # Seed of every synthetic stream. One integer fixes the concept geometry, the
 # drift transitions and the instance draw for all six of them; the per-stream
 # offsets below keep the families independent of each other.
-STREAM_SEED = 7919
+STREAM_SEED = 100
 
 _OFFSET = {
-    "LED_a": 0, "LED_g": 1301, "AGR_a": 2609, "AGR_g": 3911,
-    "RBF_m": 5227, "RBF_f": 6529, "RBF_a": 7841,
+    "LED_a": 0, "LED_g": 1, "AGR_a": 2, "AGR_g": 3,
+    "RBF_m": 4, "RBF_f": 5, "RBF_a": 6,
 }
 
 N_INSTANCES = 100_000

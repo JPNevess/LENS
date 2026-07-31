@@ -45,7 +45,7 @@ RESULTS_BASE  = os.path.join(_ROOT, "results")
 
 CONFIGS       = (CONFIG_0,) + tuple(PAPER_CONFIGS.keys())
 LABEL_PCTS    = (5, 1)
-SEEDS         = (42,)
+SEEDS         = (101,)
 ENSEMBLE_SIZE = 30
 GRACE_PERIOD  = 50
 TIE_THRESHOLD = 0.05

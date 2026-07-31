@@ -24,9 +24,6 @@ at all: CapyMOA's evaluator trains on the first ``INITIAL_LABELED`` instances bu
 does not score them, so a 100,000-instance stream reports 99,000. The evaluation
 loop in ``lens/evaluation.py`` excludes the same warm-up window. Without that,
 this row would be scored on an easier stream than the others.
-
-Reference: Gomes et al., SLEADE: Disagreement-Based Semi-Supervised Learning for
-Sparsely Labeled Evolving Data Streams, IEEE TKDE, 2025.
 """
 import argparse
 import os
@@ -53,7 +50,6 @@ from lens.streams import resolve as resolve_stream
 # --------------------------------------------------------------------- identity
 CONFIG = CONFIG_SLEADE
 NAME = "SLEADE"
-REFERENCE = "Gomes et al., IEEE TKDE, 2025"
 
 # --------------------------------------------------------------------- protocol
 ENSEMBLE_SIZE = 30       # members, matching every other method
@@ -69,8 +65,8 @@ LABEL_PCTS = (5, 1)
 # Every reported cell is the mean over these five seeds, the same ones the other
 # entry points use. A seed initialises the learner and, offset by
 # LABEL_SEED_OFFSET, draws which instances arrive labelled.
-SEEDS = (101, 217, 349, 523, 811)
-LABEL_SEED_OFFSET = 4703
+SEEDS = (101, 102, 103, 104, 105)
+LABEL_SEED_OFFSET = 1000
 
 ROW_COLUMNS = [
     "dataset", "config", "method", "label_pct", "diversity_measure", "seed",
@@ -179,7 +175,7 @@ def report_cells(rows):
 
 def build_parser():
     p = argparse.ArgumentParser(
-        description=f"{NAME} -- {REFERENCE}",
+        description=f"{NAME}: prequential semi-supervised evaluation",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     p.add_argument("--datasets", nargs="+", default=list(DATASETS),
                    help="stream names to evaluate")

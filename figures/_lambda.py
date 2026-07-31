@@ -18,7 +18,7 @@ WINDOW_CSV = os.path.join(FIGURE_DATA, "window_signals.csv")
 
 ABRUPT = ("AGR_a", "LED_a")
 GRADUAL = ("AGR_g", "LED_g")
-SEED = 42
+SEED = 101
 
 # Fixed values of the relevance/diversity trade-off, plus the dynamic policy.
 LAMBDA_COLOUR = {"w0.50": "#4C72B0", "w0.75": "#55A868", "w0.95": "#C44E52"}

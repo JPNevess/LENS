@@ -26,8 +26,6 @@ repository: the same base learners, the same ensemble size, the same streams
 and the same prequential test-then-train protocol. That is deliberate. It means
 a difference between two rows of the results table is a difference of
 mechanism, not of implementation effort or of tuning.
-
-Reference: Abadifard et al., DynED: dynamic ensemble diversification in data stream classification, CIKM 2023
 """
 import argparse
 import os
@@ -77,11 +75,11 @@ LABEL_PCTS = (5, 1)
 # by LABEL_SEED_OFFSET, also draws which instances arrive labelled. A single seed
 # can sit more than a point away from the mean on the noisier streams, so one
 # seed is not comparable with a reported cell.
-SEEDS = (101, 217, 349, 523, 811)
+SEEDS = (101, 102, 103, 104, 105)
 
 # Keeps the labelled subset from being a deterministic function of the learner
 # initialisation, so the two can be varied independently.
-LABEL_SEED_OFFSET = 4703
+LABEL_SEED_OFFSET = 1000
 
 ROW_COLUMNS = [
     "dataset", "config", "method", "label_pct", "diversity_measure", "seed",
