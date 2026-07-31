@@ -47,10 +47,16 @@ which figure it draws and which file it reads.
 
 ## Running a method
 
-Each entry point in `benchmarks/` evaluates one method under the shared protocol
-defined in `benchmarks/_runner.py`: same base learners, same ensemble size, same
-prequential test-then-train evaluation, same streams. Only the selection and
-self-training mechanisms differ.
+Each file in `benchmarks/` is a standalone evaluation of one method. It states
+the mechanism, spells out the protocol constants it runs under, implements the
+method's selection rule, and has its own command line. Nothing has to be read
+alongside it to know what was run.
+
+The protocol constants are deliberately identical across the files: same base
+learners, same ensemble size, same streams, same label rates, same seeds, same
+prequential test-then-train evaluation. That is what lets the table be read as a
+comparison of mechanisms — a difference between two columns is a difference in
+selection or self-training, not in tuning or in implementation effort.
 
 ```bash
 python benchmarks/run_lens.py                       # the full method
@@ -68,8 +74,9 @@ mean, so `--seeds 42` alone is not comparable with the reported values.
 
 The baselines named `our_implementation_of_*` reproduce the mechanism of a
 published method inside this harness; they are not ports of the original
-implementations. `sleade_implementation.py` is the exception: it runs the
-reference implementation shipped with CapyMOA.
+implementations, and each file says at the top how it relates to the method it is
+named after. `sleade_implementation.py` is the exception: it runs the reference
+implementation shipped with CapyMOA, through CapyMOA's own evaluator.
 
 ## Re-running the studies
 
@@ -100,7 +107,7 @@ python experiments/export_figure_data.py --source results/probes
 
 ```
 lens/           the method: ensemble, referee, evaluation loop
-benchmarks/     one entry point per method in the comparison
+benchmarks/     one standalone script per method in the comparison
 experiments/    the studies that produce results/, and the dataset generator
 figures/        one script per figure, reading only results/
 results/        committed CSVs the figures are built from

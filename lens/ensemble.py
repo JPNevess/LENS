@@ -467,15 +467,7 @@ class LENS:
         else:
             effective_acc = pred_acc
 
-        m = self.inference_mode
-        if m == INF_NONE:
-            competences = np.ones(self.ensemble_size) + epsilon
-        elif m == INF_MARGIN:
-            competences = margins + epsilon
-        elif m == INF_MLHAT_A:
-            competences = effective_acc + epsilon
-        else:
-            competences = np.sqrt(margins * effective_acc) + epsilon
+        competences = self.competence(margins, effective_acc) + epsilon
         self._last_competence = competences
 
         self._last_mmr_indices = self._apply_mmr_selection(competences)
@@ -495,6 +487,23 @@ class LENS:
             self._train_student(instance, final_pred)
 
         return final_pred
+
+    def competence(self, margins, est_acc):
+        """Per-member competence used to rank members at prediction time.
+
+        ``margins`` is each member's prediction margin on the current instance and
+        ``est_acc`` is the referee's estimate of whether it is currently correct.
+        The entry points in ``benchmarks/`` override this with the single formula
+        their method uses; the dispatch below is the default for a bare ensemble.
+        """
+        m = self.inference_mode
+        if m == INF_NONE:
+            return np.ones(self.ensemble_size)
+        if m == INF_MARGIN:
+            return margins
+        if m == INF_MLHAT_A:
+            return est_acc
+        return np.sqrt(margins * est_acc)
 
     def _topk_vote_weights(self):
         """Return the selected members and their vote weights.

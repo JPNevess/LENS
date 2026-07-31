@@ -35,8 +35,13 @@ def run_experiment(dataset_path, config, label_pct,
                    history_dir=None, diag_every=500, diag_all=False,
                    admission=False, admission_cap=150000,
                    referee_mode="mlhat", referee_probe=False,
-                   referee_probe_cap=30000, referee_probe_preds=False):
-    """Run one configuration on one stream and return its metrics."""
+                   referee_probe_cap=30000, referee_probe_preds=False,
+                   ensemble_cls=None):
+    """Run one configuration on one stream and return its metrics.
+
+    ``ensemble_cls`` builds the ensemble; the entry points in ``benchmarks/`` pass
+    their own subclass so the mechanism they implement is the one that runs.
+    """
     if config == CONFIG_SLEADE:
         return _run_sleade_baseline(
             dataset_path     = dataset_path,
@@ -54,7 +59,7 @@ def run_experiment(dataset_path, config, label_pct,
     stream       = ARFFStream(dataset_path)
     dataset_name = os.path.splitext(os.path.basename(dataset_path))[0]
 
-    ensemble = LENS(
+    ensemble = (ensemble_cls or LENS)(
         schema           = stream.get_schema(),
         config           = config,
         ensemble_size    = ensemble_size,
