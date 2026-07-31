@@ -11,16 +11,11 @@ Selection at prediction time
 Training on unlabelled instances
     none; unlabelled instances are discarded
 
-Relation to the published method
---------------------------------
-Adaptive Random Forest bags Hoeffding trees over random feature subspaces and
-detects drift per member. This row runs the same idea inside this repository's
-ensemble: random patches, Hoeffding Adaptive Trees, and pool replacement in
-place of the background-tree mechanism.
-
-It is not a port of the authors' implementation. It is this repository's own
-ensemble with both mechanisms switched off, which is what makes it the floor
-the other rows are measured against.
+How this row is built
+---------------------
+Implemented in this repository's ensemble with both mechanisms off: random
+patches over Hoeffding Adaptive Trees, uniform vote, labelled instances only.
+Pool replacement stands in for the background-tree mechanism.
 
 Every entry point in ``benchmarks/`` shares the evaluation harness of this
 repository: the same base learners, the same ensemble size, the same streams

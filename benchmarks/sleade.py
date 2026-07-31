@@ -1,13 +1,9 @@
 """SLEADE, run from the authors' own implementation.
 
-This row is not a reimplementation. It runs the SLEADE that ships with CapyMOA,
-driven by CapyMOA's own prequential semi-supervised evaluator, so the comparison
-is against the authors' code rather than against our reading of their paper.
-
-It is the only entry point in this directory that runs external code. Every
-other one reproduces the mechanism of the method it is named after inside this
-repository's own ensemble, and says so at the top of its file; this row is the
-single point where the comparison touches an author's implementation.
+This row calls the SLEADE that ships with CapyMOA, driven by CapyMOA's own
+prequential semi-supervised evaluator, so it runs the authors' code directly.
+The ensemble size, the streams, the label rates, the seeds and the warm-up
+window are the ones every other entry point uses, so the rows line up.
 
 Mechanism
 ---------

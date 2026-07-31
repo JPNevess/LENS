@@ -14,14 +14,11 @@ Selection at prediction time
 Training on unlabelled instances
     none; unlabelled instances are discarded
 
-Relation to the published method
---------------------------------
-Dynamic ensemble selection estimates local competence in a neighbourhood of the
-query, which assumes a stored and still-valid reference set. Here the estimate
-comes from the online referee and the local part of the signal is the margin.
-
-It is not a port of a published selection method: it is this repository's
-ensemble ranking members by sqrt(A-hat * M), with self-training off.
+How this row is built
+---------------------
+Implemented in this repository's ensemble, ranking members by sqrt(A-hat * M)
+with self-training off. Local competence comes from the referee and the margin
+rather than from a stored reference set.
 
 Every entry point in ``benchmarks/`` shares the evaluation harness of this
 repository: the same base learners, the same ensemble size, the same streams

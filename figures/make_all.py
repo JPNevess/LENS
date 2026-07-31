@@ -9,7 +9,6 @@ _HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, _HERE)
 
 SCRIPTS = [
-    "table01_results.py",
     "fig01a_competence_maps.py",
     "fig01b_lambda_internal_signals.py",
     "fig04_critical_difference.py",

@@ -15,15 +15,11 @@ Selection at prediction time
 Training on unlabelled instances
     a member trains on its own prediction when the referee's estimate clears the threshold, weighted by that estimate
 
-Relation to the published method
---------------------------------
-Self-labelled techniques gate on a confidence measure derived from the learner
-itself. Substituting a meta-learned reliability estimate is the point of this
-row: it measures what the referee buys over raw confidence, holding everything
-else fixed.
-
-The asterisk in the name records that this is a variant rather than a published
-configuration. It is not a port of any self-labelled method.
+How this row is built
+---------------------
+Implemented in this repository's ensemble with a uniform vote and self-training
+gated by the referee. The asterisk in the name records that the gate is the
+meta-learned estimate rather than the learner's own confidence.
 
 Every entry point in ``benchmarks/`` shares the evaluation harness of this
 repository: the same base learners, the same ensemble size, the same streams

@@ -15,14 +15,10 @@ Selection at prediction time
 Training on unlabelled instances
     a member trains on its own prediction when its margin clears the threshold
 
-Relation to the published method
---------------------------------
-Self-training is usually described in batch, with repeated rounds over a fixed
-pool of unlabelled data. This row is a single online pass, with the confidence
-gate applied per member and per instance, which is the natural streaming form.
-
-It is not a port of a published system: it is this repository's ensemble with a
-uniform vote and margin-gated self-training.
+How this row is built
+---------------------
+Implemented in this repository's ensemble with a uniform vote and margin-gated
+self-training, as a single online pass rather than repeated batch rounds.
 
 Every entry point in ``benchmarks/`` shares the evaluation harness of this
 repository: the same base learners, the same ensemble size, the same streams

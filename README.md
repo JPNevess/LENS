@@ -95,23 +95,11 @@ instances arrive labelled; on the noisier streams a single seed sits more than a
 point away from that mean, so one seed alone is not comparable with a reported
 value.
 
-### What these files are, and what they are not
-
-**Only `sleade.py` runs external code.** It calls the SLEADE implementation
-shipped with CapyMOA, through CapyMOA's own evaluator, so that row is the
-authors' method rather than our reading of their paper.
-
-**Every other file reproduces a published *mechanism* inside this repository's
-own ensemble. None of them is a port of the corresponding implementation.** Each
-one is the LENS ensemble with the selection and self-training axes set to one
-combination, and each states at the top of its file what it shares with the
-method it is named after and what it does not. A row labelled `DynED` measures
-maximal marginal relevance selection as implemented here; it is not a
-measurement of Abadifard et al.'s system, and the file says so.
-
-That is what the shared harness buys and costs at the same time: the rows are
-comparable with each other because nothing differs but the mechanism, and for
-the same reason they are not comparable with numbers published elsewhere.
+`sleade.py` runs the SLEADE implementation shipped with CapyMOA, through
+CapyMOA's own evaluator. The other rows are implemented in this repository's
+ensemble so that the protocol is shared, and each file records under *How this
+row is built* the configuration it runs and what it takes from the method it is
+named after.
 
 ## Studies
 

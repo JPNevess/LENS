@@ -14,15 +14,11 @@ Selection at prediction time
 Training on unlabelled instances
     none; unlabelled instances are discarded
 
-Relation to the published method
---------------------------------
-Abstention and selective-classification methods reject an instance when
-confidence is low. This row uses the same confidence signal to weight members
-instead of to reject, so the ensemble always answers and the comparison stays
-on accuracy rather than on coverage.
-
-It is not a port of any published method: it is this repository's ensemble with
-margin-based selection switched on and self-training off.
+How this row is built
+---------------------
+Implemented in this repository's ensemble with margin-based selection on and
+self-training off. The confidence signal weights members rather than rejecting
+instances, so the ensemble always answers.
 
 Every entry point in ``benchmarks/`` shares the evaluation harness of this
 repository: the same base learners, the same ensemble size, the same streams

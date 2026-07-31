@@ -17,14 +17,11 @@ Selection at prediction time
 Training on unlabelled instances
     a member trains on the majority label of the others when they disagree with it, weighted by the agreeing fraction
 
-Relation to the published method
---------------------------------
-Co-training was posed for two learners on two independent views. Here the two
-views become the many random subspaces of a forest, and the pairwise exchange
-becomes one member against the consensus of the rest.
-
-It is not a port of a published co-forest algorithm: it is this repository's
-ensemble with a uniform vote and disagreement-based pseudo-labelling.
+How this row is built
+---------------------
+Implemented in this repository's ensemble with a uniform vote and disagreement-
+based pseudo-labelling. The random subspaces of the forest take the place of
+two independent views.
 
 Every entry point in ``benchmarks/`` shares the evaluation harness of this
 repository: the same base learners, the same ensemble size, the same streams

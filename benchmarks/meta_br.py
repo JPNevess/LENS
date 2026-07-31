@@ -14,15 +14,11 @@ Selection at prediction time
 Training on unlabelled instances
     none; unlabelled instances are discarded
 
-Relation to the published method
---------------------------------
-META-DES picks competent members from a validation neighbourhood of the query,
-using several meta-features. This row replaces the neighbourhood and the
-meta-features with an online meta-learner that generalises across the stream,
-because a stored validation set does not survive concept drift.
-
-It is not a port of META-DES. It is this repository's ensemble ranking members
-by the referee's estimate, with self-training off.
+How this row is built
+---------------------
+Implemented in this repository's ensemble, ranking members by the referee's
+estimate with self-training off. The online meta-learner takes the place of a
+validation neighbourhood, which does not survive concept drift.
 
 Every entry point in ``benchmarks/`` shares the evaluation harness of this
 repository: the same base learners, the same ensemble size, the same streams

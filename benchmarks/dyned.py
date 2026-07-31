@@ -14,18 +14,12 @@ Selection at prediction time
 Training on unlabelled instances
     none; unlabelled instances are discarded
 
-Relation to the published method
---------------------------------
-DynED clusters the pool and selects a diverse subset by maximal marginal
-relevance over a measured competence. This row keeps the maximal marginal
-relevance idea but scores members with the referee's estimate rather than with
-a competence measured against labels, which is what lets it run when almost no
-labels arrive.
-
-It is not a port of DynED and should not be read as one. It is this
-repository's ensemble with maximal marginal relevance selection switched on and
-self-training off; the clustering step of the published method has no
-counterpart here.
+How this row is built
+---------------------
+Implemented in this repository's ensemble with maximal marginal relevance
+selection on and self-training off. Members are scored by the referee's
+estimate rather than by a competence measured against labels, which is what
+lets the row run when almost no labels arrive; there is no clustering step.
 
 Every entry point in ``benchmarks/`` shares the evaluation harness of this
 repository: the same base learners, the same ensemble size, the same streams
